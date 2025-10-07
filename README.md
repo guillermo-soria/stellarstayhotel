@@ -157,3 +157,14 @@ Single database for Day 2 (conceptually DB-per-service).
 | **8** | What is the expected **currency and tax policy**? | Use **USD**, tax-exclusive pricing for simplicity. |
 | **9** | Should the service provide **partial availability** (e.g., some but not all nights)? | No — reservations must have continuous availability for the full date range. |
 | **10** | Is **AI integration (Ollama)** mandatory or purely bonus? | It is optional (bonus) — the system must function fully without it. |
+
+
+
+
+
+
+
+## Comandos ejecutados
+npm init -y
+npm i express pino zod
+npm i -D typescript ts-node-dev @types/node @types/express

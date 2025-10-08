@@ -10,7 +10,7 @@ export interface QuoteInput {
 }
 
 export interface NightBreakdown {
-  date: string;             // YYYY-MM-DD (noche)
+  date: string;             // YYYY-MM-DD (night)
   baseCents: number;        // base por noche
   weekendUpliftCents: number; // +25% si Sáb/Dom
   lengthDiscountCents: number; // -$4/-$8/-$12 por noche según estadía

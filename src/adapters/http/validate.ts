@@ -6,7 +6,7 @@ type Part = "query" | "body" | "params" | "headers";
 export function validate(part: Part, schema: ZodObject<any> ) {
   return (req: Request, _res: Response, next: NextFunction) => {
     try {
-      const parsed = schema.parse((req as any)[part]);
+      const parsed = schema.parse(req[part as keyof Request]);
       
       // Use Object.defineProperty to safely set the parsed values
       Object.defineProperty(req, part, {

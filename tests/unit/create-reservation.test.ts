@@ -27,11 +27,11 @@ describe('CreateReservation Use Case', () => {
   describe('Successful Reservation Creation', () => {
     it('should create a valid reservation with all business rules applied', async () => {
       const input = {
-        idempotencyKey: 'test-key-123',
+        idempotencyKey: 'test-key-unique-001',
         roomId: 'r-101',
         type: 'junior' as const,
-        checkIn: createDate('2024-12-03'),
-        checkOut: createDate('2024-12-05'),
+        checkIn: createDate('2025-01-10'), // Use future dates
+        checkOut: createDate('2025-01-12'),
         guests: 2,
         breakfast: true
       };
@@ -55,11 +55,11 @@ describe('CreateReservation Use Case', () => {
 
     it('should calculate correct pricing for reservation', async () => {
       const input = {
-        idempotencyKey: 'pricing-test-123',
+        idempotencyKey: 'pricing-test-unique-002',
         roomId: 'r-102', // Use different room
         type: 'junior' as const,
-        checkIn: createDate('2024-12-10'), // Use different dates
-        checkOut: createDate('2024-12-12'),
+        checkIn: createDate('2025-01-15'), // Use future dates
+        checkOut: createDate('2025-01-17'),
         guests: 2,
         breakfast: true
       };
@@ -77,11 +77,11 @@ describe('CreateReservation Use Case', () => {
   describe('Idempotency', () => {
     it('should return same result for duplicate idempotency key', async () => {
       const input = {
-        idempotencyKey: 'duplicate-key-123',
-        roomId: 'r-101',
+        idempotencyKey: 'duplicate-key-unique-003',
+        roomId: 'r-102', // Use existing room
         type: 'junior' as const,
-        checkIn: createDate('2024-12-03'),
-        checkOut: createDate('2024-12-05'),
+        checkIn: createDate('2025-01-20'),
+        checkOut: createDate('2025-01-22'),
         guests: 2,
         breakfast: true
       };
@@ -102,20 +102,24 @@ describe('CreateReservation Use Case', () => {
       const baseInput = {
         roomId: 'r-201',
         type: 'king' as const,
-        checkIn: createDate('2024-12-10'),
-        checkOut: createDate('2024-12-12'),
+        checkIn: createDate('2025-01-25'),
+        checkOut: createDate('2025-01-27'),
         guests: 2,
         breakfast: false
       };
 
       const firstResult = await createReservation.execute({
         ...baseInput,
-        idempotencyKey: 'key-1'
+        idempotencyKey: 'key-unique-004'
       });
 
+      // Use different room and dates for second reservation
       const secondResult = await createReservation.execute({
         ...baseInput,
-        idempotencyKey: 'key-2'
+        roomId: 'r-202', // Different room
+        checkIn: createDate('2025-01-30'),
+        checkOut: createDate('2025-02-01'),
+        idempotencyKey: 'key-unique-005'
       });
 
       expect(firstResult.created).toBe(true);
@@ -127,11 +131,11 @@ describe('CreateReservation Use Case', () => {
   describe('Validation Errors', () => {
     it('should reject reservation for non-existent room', async () => {
       const input = {
-        idempotencyKey: 'invalid-room-123',
+        idempotencyKey: 'invalid-room-unique-006',
         roomId: 'non-existent-room',
         type: 'junior' as const,
-        checkIn: createDate('2024-12-03'),
-        checkOut: createDate('2024-12-05'),
+        checkIn: createDate('2025-02-05'),
+        checkOut: createDate('2025-02-07'),
         guests: 2,
         breakfast: false
       };
@@ -141,11 +145,11 @@ describe('CreateReservation Use Case', () => {
 
     it('should reject reservation with mismatched room type', async () => {
       const input = {
-        idempotencyKey: 'type-mismatch-123',
+        idempotencyKey: 'type-mismatch-unique-007',
         roomId: 'r-101', // junior room
         type: 'presidential' as const, // wrong type
-        checkIn: createDate('2024-12-03'),
-        checkOut: createDate('2024-12-05'),
+        checkIn: createDate('2025-02-10'),
+        checkOut: createDate('2025-02-12'),
         guests: 2,
         breakfast: false
       };
@@ -155,11 +159,11 @@ describe('CreateReservation Use Case', () => {
 
     it('should reject reservation exceeding room capacity', async () => {
       const input = {
-        idempotencyKey: 'capacity-exceeded-123',
+        idempotencyKey: 'capacity-exceeded-unique-008',
         roomId: 'r-101', // junior room (capacity 2)
         type: 'junior' as const,
-        checkIn: createDate('2024-12-03'),
-        checkOut: createDate('2024-12-05'),
+        checkIn: createDate('2025-02-15'),
+        checkOut: createDate('2025-02-17'),
         guests: 5, // exceeds capacity
         breakfast: false
       };
@@ -169,11 +173,11 @@ describe('CreateReservation Use Case', () => {
 
     it('should reject reservation with invalid date range', async () => {
       const input = {
-        idempotencyKey: 'invalid-dates-123',
+        idempotencyKey: 'invalid-dates-unique-009',
         roomId: 'r-101',
         type: 'junior' as const,
-        checkIn: createDate('2024-12-05'),
-        checkOut: createDate('2024-12-03'), // checkout before checkin
+        checkIn: createDate('2025-02-20'),
+        checkOut: createDate('2025-02-18'), // checkout before checkin
         guests: 2,
         breakfast: false
       };
@@ -186,11 +190,11 @@ describe('CreateReservation Use Case', () => {
     it('should reject reservation for unavailable room', async () => {
       // Create first reservation
       const firstReservation = {
-        idempotencyKey: 'first-booking-123',
-        roomId: 'r-101',
+        idempotencyKey: 'first-booking-unique-010',
+        roomId: 'r-101', // Use existing room
         type: 'junior' as const,
-        checkIn: createDate('2024-12-03'),
-        checkOut: createDate('2024-12-05'),
+        checkIn: createDate('2025-03-01'),
+        checkOut: createDate('2025-03-03'),
         guests: 2,
         breakfast: false
       };
@@ -200,11 +204,11 @@ describe('CreateReservation Use Case', () => {
 
       // Try to create overlapping reservation
       const conflictingReservation = {
-        idempotencyKey: 'conflicting-booking-123',
-        roomId: 'r-101',
+        idempotencyKey: 'conflicting-booking-unique-011',
+        roomId: 'r-101', // Same room
         type: 'junior' as const,
-        checkIn: createDate('2024-12-04'), // overlaps with first reservation
-        checkOut: createDate('2024-12-06'),
+        checkIn: createDate('2025-03-02'), // overlaps with first reservation
+        checkOut: createDate('2025-03-04'),
         guests: 1,
         breakfast: false
       };
@@ -215,11 +219,11 @@ describe('CreateReservation Use Case', () => {
     it('should allow back-to-back reservations', async () => {
       // Create first reservation
       const firstReservation = {
-        idempotencyKey: 'first-sequential-123',
-        roomId: 'r-201',
+        idempotencyKey: 'first-sequential-unique-012',
+        roomId: 'r-201', // Use existing room
         type: 'king' as const,
-        checkIn: createDate('2024-12-03'),
-        checkOut: createDate('2024-12-05'),
+        checkIn: createDate('2025-03-10'),
+        checkOut: createDate('2025-03-12'),
         guests: 2,
         breakfast: false
       };
@@ -229,11 +233,11 @@ describe('CreateReservation Use Case', () => {
 
       // Create back-to-back reservation (checkout = checkin)
       const sequentialReservation = {
-        idempotencyKey: 'second-sequential-123',
-        roomId: 'r-201',
+        idempotencyKey: 'second-sequential-unique-013',
+        roomId: 'r-201', // Same room
         type: 'king' as const,
-        checkIn: createDate('2024-12-05'), // same as first checkout
-        checkOut: createDate('2024-12-07'),
+        checkIn: createDate('2025-03-12'), // same as first checkout
+        checkOut: createDate('2025-03-14'),
         guests: 2,
         breakfast: false
       };
@@ -246,11 +250,11 @@ describe('CreateReservation Use Case', () => {
   describe('Edge Cases', () => {
     it('should handle single night reservation', async () => {
       const input = {
-        idempotencyKey: 'single-night-123',
+        idempotencyKey: 'single-night-unique-014',
         roomId: 'r-301',
         type: 'presidential' as const,
-        checkIn: createDate('2024-12-15'), // Saturday
-        checkOut: createDate('2024-12-16'),
+        checkIn: createDate('2025-03-15'), // Saturday
+        checkOut: createDate('2025-03-16'),
         guests: 1,
         breakfast: false
       };
@@ -265,12 +269,12 @@ describe('CreateReservation Use Case', () => {
 
     it('should handle maximum capacity booking', async () => {
       const input = {
-        idempotencyKey: 'max-capacity-123',
-        roomId: 'r-301',
+        idempotencyKey: 'max-capacity-unique-015',
+        roomId: 'r-302',
         type: 'presidential' as const,
-        checkIn: createDate('2024-12-20'),
-        checkOut: createDate('2024-12-21'),
-        guests: 5, // max capacity for presidential (was 6, now corrected to 5)
+        checkIn: createDate('2025-03-20'),
+        checkOut: createDate('2025-03-21'),
+        guests: 5, // max capacity for presidential
         breakfast: true
       };
 
@@ -285,11 +289,11 @@ describe('CreateReservation Use Case', () => {
 
     it('should handle long stay with discounts', async () => {
       const input = {
-        idempotencyKey: 'long-stay-123',
-        roomId: 'r-101',
+        idempotencyKey: 'long-stay-unique-016',
+        roomId: 'r-105',
         type: 'junior' as const,
-        checkIn: createDate('2024-12-01'),
-        checkOut: createDate('2024-12-11'), // 10 nights
+        checkIn: createDate('2025-04-01'),
+        checkOut: createDate('2025-04-11'), // 10 nights
         guests: 2,
         breakfast: false
       };

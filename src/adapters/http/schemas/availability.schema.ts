@@ -8,6 +8,7 @@ export const AvailabilityQuerySchema = z.object({
   guests: z.coerce.number().int().min(1),
   type: RoomType.optional(),
   breakfast: z.coerce.boolean().optional().default(false), // Add breakfast support
+  breakdown: z.coerce.boolean().optional().default(false), // Add breakdown support
 })
 .refine((q) => q.checkOut > q.checkIn, { message: "checkOut must be after checkIn", path: ["checkOut"] })
 .refine((q) => {

@@ -9,8 +9,8 @@ export async function createReservationController(req: Request, res: Response, n
       throw e;
     }
 
-    // req.body is already validated & coerced by Zod
-    const body = req.body as {
+    // req.validatedBody contains data validated & coerced by Zod
+    const body = req.validatedBody as {
       roomId: string; type: "junior"|"king"|"presidential";
       checkIn: string; checkOut: string; guests: number; breakfast: boolean;
     };

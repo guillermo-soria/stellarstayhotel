@@ -113,7 +113,7 @@ export class PricingEngine {
   }
 
   private isWeekend(d: Date): boolean {
-    const day = d.getDay(); // 0 dom, 6 sáb
+    const day = d.getDay(); // 0 sun, 6 sat
     return day === 0 || day === 6;
   }
 

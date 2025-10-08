@@ -1,20 +1,15 @@
-import { ZodObject, ZodError } from "zod";
+import { ZodObject, ZodError, ZodRawShape } from "zod";
 import { Request, Response, NextFunction } from "express";
 
 type Part = "query" | "body" | "params" | "headers";
 
-export function validate<T>(part: Part, schema: ZodObject<T>) {
+export function validate<T extends ZodRawShape>(part: Part, schema: ZodObject<T>) {
   return (req: Request, _res: Response, next: NextFunction) => {
     try {
-      const parsed = schema.parse(req[part as keyof Request]);
+      const parsed = schema.parse(req[part]);
       
-      // Use Object.defineProperty to safely set the parsed values
-      Object.defineProperty(req, part, {
-        value: parsed,
-        writable: true,
-        enumerable: true,
-        configurable: true
-      });
+      // Set the validated and parsed values
+      req[part] = parsed;
       
       next();
     } catch (err) {

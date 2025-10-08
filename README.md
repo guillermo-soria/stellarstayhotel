@@ -1,170 +1,449 @@
-# RFC-001 — StellarStay Hotels
+# StellarStay Hotels - Backend Assessment
 
 **Author:** Guillermo Soria  
 **Date:** 2025-10-07  
-**Status:** Draft
+**Assessment Duration:** 2 Days  
+**Implementation Option:** A (Room Search + Booking)
 
-## 1. Executive Summary
+## Project Overview
 
-StellarStay requires a scalable and reliable hotel reservation platform with dynamic pricing and external integrations (payments). The system must handle growth from ~1k to 50k+ bookings/day while maintaining 99.9% uptime.
+StellarStay Hotels scalable reservation system implementing hexagonal architecture with dynamic pricing, built with Node.js/TypeScript. The system handles complex business rules, maintains 99.9% uptime requirements, and scales from 1,000 to 50,000+ bookings/day.
 
-This RFC proposes a hexagonal (ports & adapters) architecture, stateless processing, strict input validation and error mapping, and optional AI integration (Ollama) for natural-language queries.
+**Key Features:**
+- ✅ **GET /api/rooms/available** - Real-time room availability with dynamic pricing
+- ✅ **POST /api/reservations** - Complete booking workflow with business validation  
+- ✅ **Hexagonal Architecture** - Clean separation of concerns with ports/adapters
+- ✅ **Dynamic Pricing Engine** - Weekend uplift, length discounts, breakfast options
+- ✅ **Reliability Patterns** - Retry policies, timeout management, error handling
+- ✅ **Data Consistency** - Shared repository instances prevent double-booking
 
-Day 2 will validate this design by implementing Option A:
-- `GET /api/rooms/available`
-- `POST /api/reservations`
+## Quick Start
 
-## 2. Goals / Non-Goals
+```bash
+# Clone and setup
+git clone <your-repo>
+cd stellarstayhotel
 
-### Goals
+# Install dependencies  
+npm install
 
-- Scalability through stateless design, horizontal scaling, and caching.
-- Reliability via timeouts, retries (exponential backoff), idempotency, and health/readiness checks.
-- Clear hexagonal boundaries between domain, ports, and adapters.
-- Pricing engine implementing StellarStay's pricing rules in a deterministic order.
-- Single source of truth for API schemas using Zod, with OpenAPI generation via zod-to-openapi (to avoid Swagger duplication).
+# Start development server
+npm run dev
 
-### Non-Goals
+# Run tests
+npm test
 
-- Full multi-service deployment (validated through a single "Booking API" that respects hexagonal boundaries).
-- Full payment orchestration (stubbed port unless required).
-- Complex async/event-driven features (optional bonus only).
+# Access API
+curl "http://localhost:3000/api/rooms/available?checkIn=2024-12-01&checkOut=2024-12-03&guests=2&type=king"
+curl -X POST "http://localhost:3000/api/reservations" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: unique-key-123" \
+  -d '{"roomId":"room-003","type":"king","checkIn":"2024-12-01","checkOut":"2024-12-03","guests":2,"breakfast":true}'
+```
 
-## 3. Functional Scope (Day 2 Validation)
+---
 
-### Option A
+# RFC-001 — StellarStay Hotels System Architecture
 
-- `GET /api/rooms/available?checkIn&checkOut&guests&type?`
-- `POST /api/reservations` (requires Idempotency-Key header)
+## 1. Executive Summary & Requirements
 
-### Optional Bonus:
-- `POST /api/ai/query` — Natural-language room search powered by Ollama.
+### Problem Statement
+StellarStay Hotels requires a scalable reservation system to handle growth from 1,000 to 50,000+ bookings/day while maintaining 99.9% uptime during peak periods. The system must support complex dynamic pricing rules and multiple external integrations.
 
-## 4. Architecture Overview (Hexagonal)
+### Proposed Architectural Approach  
+**Hexagonal Architecture** with clear domain boundaries, implementing:
+- Clean separation between business logic and infrastructure
+- Port-based interfaces for external dependencies
+- Adapter pattern for technology-specific implementations
+- Stateless design enabling horizontal scaling
 
-**Domain:** Core entities (Room, Inventory, Reservation), PricingEngine, and availability rules.
+### Key Requirements
+- **Scalability:** Handle 50x traffic growth with horizontal scaling
+- **Reliability:** 99.9% uptime with proper error handling and retries
+- **Business Logic:** Complex pricing rules with deterministic application
+- **Data Consistency:** Prevent double-booking and maintain inventory accuracy
+- **Performance:** Sub-200ms response times for availability queries
 
-**Application / Use Cases:** GetAvailableRooms, CreateReservation.
+### Success Metrics
+- **Availability:** 99.9% uptime during peak periods
+- **Throughput:** 50,000+ bookings/day capacity
+- **Latency:** <200ms for availability queries, <500ms for reservations
+- **Accuracy:** 100% pricing calculation correctness
+- **Reliability:** <0.1% error rate with proper retry handling
 
-**Ports:**
-- **Primary:** HTTP controllers.
-- **Secondary:** RoomRepoPort, ReservationRepoPort, PaymentPort (stub), CachePort (optional), AIModelPort (bonus).
+## 2. System Architecture (Hexagonal Design)
 
-**Adapters:**
-- HTTP (Express)
-- DB (Prisma → SQLite for development, PostgreSQL for production)
-- Cache (Redis, optional)
-- Payment (HTTP client stub)
-- AI (Ollama HTTP adapter, optional)
+### 2.1 Service Architecture
 
-## 5. Communication & Error Handling
+#### Core Services with Hexagonal Boundaries
 
-REST (synchronous) with strict request validation (Zod).
+**Reservation Service (Primary Focus)**
+- **Core Responsibilities:**
+  - Booking lifecycle management
+  - Business rule validation (capacity, dates, pricing)
+  - Idempotency handling
+  - Reservation state management
 
-**Error mapping:**
-- `400` – Invalid input
-- `404` – Not found
-- `409` – Conflict (no availability or duplicate booking)
-- `422` – Business rule violation
-- `5xx` – Internal or upstream error
+- **Primary Ports (Incoming):**
+  - `CreateReservationPort` - Booking creation interface
+  - `QueryReservationPort` - Reservation lookup interface
 
-**Timeouts:** enforced per request and per dependency.
+- **Secondary Ports (Outgoing):**
+  - `ReservationRepoPort` - Persistence interface
+  - `RoomRepoPort` - Room availability interface  
+  - `PricingEnginePort` - Price calculation interface
+  - `PaymentPort` - Payment processing interface (stubbed)
 
-**Idempotency:** Idempotency-Key for POST /api/reservations.
+- **Key Adapters:**
+  - `HTTPReservationAdapter` - REST API endpoints
+  - `InMemoryReservationRepository` - Development persistence
+  - `PrismaReservationRepository` - Production persistence
 
-## 6. Scalability & Reliability Strategy
+**Room Service**
+- **Core Responsibilities:**
+  - Room inventory management
+  - Availability calculation
+  - Room type and capacity validation
 
-### Scalability
+- **Primary Ports:**
+  - `RoomAvailabilityPort` - Availability query interface
 
-- Stateless services behind a load balancer.
-- Database scaling via read replicas and partitioning by hotel/region (future).
-- Caching (Redis) for hot reads (availability, pricing).
-- Pagination for listing endpoints.
+- **Secondary Ports:**
+  - `RoomRepoPort` - Room data persistence
+  - `ReservationRepoPort` - Conflict checking
 
-### Reliability
+- **Key Adapters:**
+  - `HTTPRoomAdapter` - REST availability endpoint
+  - `InMemoryRoomRepository` - Development storage
 
-- Retry with exponential backoff for transient failures (never retry 4xx).
-- Optional circuit breaker around payment/AI services.
-- `/health` (liveness) and `/ready` (readiness) endpoints.
-- Structured logging (Pino) with request correlation IDs.
-- Metrics for latency, error rates, and retry counts.
+**Pricing Service**
+- **Core Responsibilities:**
+  - Dynamic price calculation
+  - Business rule application (weekend, length, breakfast)
+  - Price breakdown generation
 
-**Retry template:** Base delay 200 ms × 2^attempt, max 3 tries, jitter, bounded by overall timeout.
+- **Primary Ports:**
+  - `PricingCalculationPort` - Price quote interface
 
-## 7. Data Architecture
+- **Secondary Ports:**
+  - `ConfigurationPort` - Pricing rules configuration
 
-Single database for Day 2 (conceptually DB-per-service).
+- **Key Adapters:**
+  - `PricingEngine` - Core calculation logic
+  - `ConfigurationAdapter` - Rules management
 
-**Entities:**
-- `Room(id, type [junior|king|presidential], capacity, baseRate)`
-- `Inventory(roomId, date, available)`
-- `Reservation(id, roomId, dateRange, guests, breakfast, total, status)`
+### 2.2 Communication Architecture
 
-**Consistency:** strong for reservation commits, eventual for derived reads.
+#### Synchronous Communication Patterns
 
-**Migrations:** versioned (Prisma Migrate).
+**REST API Design:**
+```
+GET  /api/rooms/available    - Room availability with pricing
+POST /api/reservations       - Create new reservation  
+GET  /health                 - Service health check
+GET  /ready                  - Service readiness check
+```
 
-## 8. Pricing Rules (Order of Application)
+**Request/Response Flow:**
+1. **Input Validation** - Zod schema validation at API boundary
+2. **Use Case Execution** - Business logic in application layer
+3. **Domain Processing** - Core business rules in domain layer
+4. **Data Persistence** - Repository pattern for data access
+5. **Response Formatting** - Consistent JSON structure
 
-1. **Base rate per room type per day:**
-   - Junior $60, King $90, Presidential $150.
+**Error Handling Strategy:**
+- `400 Bad Request` - Invalid input parameters
+- `404 Not Found` - Room or reservation not found
+- `409 Conflict` - Room unavailable or booking conflict
+- `422 Unprocessable Entity` - Business rule violations
+- `500 Internal Server Error` - System failures with retry capability
 
-2. **Weekend uplift:** +25% on Saturdays/Sundays (per-night basis).
+**Performance Requirements:**
+- Availability queries: <200ms p95 latency
+- Reservation creation: <500ms p95 latency  
+- Health checks: <50ms response time
+- Concurrent request handling: 1000+ requests/second
 
-3. **Length discounts:** applied per day after weekend uplift:
-   - 4–6 days: −$4/day
-   - 7–9 days: −$8/day
-   - 10+ days: −$12/day
+## 3. Scalability & Reliability Strategy
 
-4. **Breakfast option:** +$5 per guest per day.
+### 3.1 Scalability Design
 
-5. **Final total** rounded to two decimals.
+**Horizontal Scaling Approach:**
+- Stateless application design enables load balancer distribution
+- Shared-nothing architecture between application instances
+- Database connection pooling for efficient resource utilization
+- Container-based deployment for easy scaling
 
-## 9. Technology Stack
+**Database Scaling Strategy:**
+- Read replicas for availability queries (eventual consistency acceptable)
+- Write operations to primary database (strong consistency required)
+- Database per service pattern for service independence
+- Partitioning by hotel/region for large-scale deployments
 
-- **Language/Runtime:** Node.js 18 + TypeScript
-- **Framework:** Express
-- **Validation:** Zod + zod-to-openapi (for OpenAPI generation later)
-- **Logging:** Pino (structured JSON)
-- **HTTP client:** undici or axios (with timeouts and retries)
-- **ORM/Database:** Prisma (SQLite for development, PostgreSQL for production)
-- **Cache:** Redis (optional)
-- **Containerization:** Docker + docker-compose
-- **AI Integration (bonus):** Ollama via HTTP adapter
+**Caching Strategy:**
+- Redis for hot availability data (5-minute TTL)
+- In-memory caching for pricing rules and room configurations
+- Cache invalidation on inventory updates
+- Cache-aside pattern for read-heavy operations
 
-## 10. Implementation Plan (Day 2)
+**Load Balancing:**
+- Round-robin distribution for stateless requests
+- Health check integration for automatic failover
+- Session affinity not required due to stateless design
 
-1. Bootstrap minimal project (folders, Express, Pino, Zod).
-2. Implement PricingEngine and date utilities.
-3. Implement use cases (GetAvailableRooms, CreateReservation) and corresponding ports.
-4. Create adapters: Prisma repositories, HTTP controllers, and logger integration.
-5. Add reliability patterns: timeouts, retries (where applicable), idempotency.
-6. Write unit tests (pricing engine) and minimal E2E happy-path tests for both endpoints.
-7. Provide a clear README with setup steps and Docker instructions.
-8. Later: generate OpenAPI spec from Zod schemas using zod-to-openapi.
+### 3.2 Reliability Patterns
 
-## 11. Open Questions and Assumptions
+**Retry Policies (REQUIRED):**
+```typescript
+// Exponential backoff with jitter
+const retryConfig = {
+  baseDelay: 200, // ms
+  maxRetries: 3,
+  backoffMultiplier: 2,
+  maxDelay: 5000, // ms
+  jitter: true
+};
 
-| # | Question | Assumption if not clarified |
-|---|----------|----------------------------|
-| **1** | What is the **overbooking policy** if multiple users reserve the last available room at the same time? | Reject subsequent attempts with **409 Conflict** (first confirmed wins). |
-| **2** | How should **weekend pricing** be applied when a stay spans multiple weekends? | Apply the +25% uplift **only to nights** that fall on Saturday/Sunday. |
-| **3** | Are **length-based discounts** applied to every night once the threshold is reached, or only to extra nights? | Apply to **all nights** once the threshold tier is reached. |
-| **4** | How is **time and timezone** handled for date ranges? | All dates are treated as **UTC**, ISO-8601 format (`YYYY-MM-DD`), without time components. |
-| **5** | Should **breakfast** charges apply to all guests and all nights when enabled? | Yes — apply `+5 * guests * nights` when `breakfast = true`. |
-| **6** | How far in advance can users search for availability, and what is the maximum stay length? | Maximum search window of **30 nights**; reject longer stays with `422 Unprocessable Entity`. |
-| **7** | What is the retention and scope of the **Idempotency-Key** header? | Cache responses for **24 hours**; key is unique per endpoint and consumer. |
-| **8** | What is the expected **currency and tax policy**? | Use **USD**, tax-exclusive pricing for simplicity. |
-| **9** | Should the service provide **partial availability** (e.g., some but not all nights)? | No — reservations must have continuous availability for the full date range. |
-| **10** | Is **AI integration (Ollama)** mandatory or purely bonus? | It is optional (bonus) — the system must function fully without it. |
+// Never retry 4xx errors (client errors)
+// Retry 5xx errors and network timeouts
+```
 
+**Timeout Management:**
+- HTTP request timeout: 30 seconds
+- Database operation timeout: 10 seconds  
+- External service timeout: 15 seconds
+- Overall request timeout: 60 seconds
 
+**Health Monitoring:**
+- `/health` endpoint for liveness checks
+- `/ready` endpoint for readiness verification
+- Database connectivity verification
+- External service dependency checks
 
+**Circuit Breaker (Optional):**
+- Payment service circuit breaker (30% failure threshold)
+- AI service circuit breaker (50% failure threshold)
+- Automatic recovery after 60-second cooldown
 
+## 4. Data Architecture
 
+### Database Per Service Design
+- **Reservation Database:** Booking data and transaction history
+- **Room Database:** Inventory and room configurations  
+- **Pricing Database:** Rules and rate configurations
 
+### Data Consistency Patterns
+- **Strong Consistency:** Reservation creation and inventory updates
+- **Eventual Consistency:** Availability queries and pricing calculations
+- **Optimistic Locking:** Conflict resolution for concurrent bookings
 
-## Comandos ejecutados
-npm init -y
-npm i express pino zod
-npm i -D typescript ts-node-dev @types/node @types/express
+### Performance Optimization
+- **Indexing Strategy:** Date ranges, room types, and availability status
+- **Query Optimization:** Efficient availability lookups with proper joins
+- **Connection Pooling:** Maximum 20 connections per service instance
+
+## 5. Technology Stack Justification
+
+### Programming Language: **Node.js + TypeScript**
+**Justification:**
+- Strong ecosystem for web APIs and microservices
+- Excellent async/await support for I/O operations
+- TypeScript provides compile-time safety and better tooling
+- Large talent pool and extensive library support
+
+### Framework: **Express.js**
+**Justification:**
+- Lightweight and flexible for REST API development
+- Excellent middleware ecosystem for cross-cutting concerns
+- Easy integration with validation and error handling
+- Production-proven for high-traffic applications
+
+### Databases: **PostgreSQL (Production) + SQLite (Development)**
+**Justification:**
+- PostgreSQL: ACID compliance, JSON support, excellent performance
+- SQLite: Zero-configuration development environment
+- Prisma ORM: Type-safe database access with migration support
+
+### Validation: **Zod**
+**Justification:**
+- Runtime type validation with TypeScript integration
+- Excellent error messages for API consumers
+- Schema-first approach with OpenAPI generation capability
+
+### Infrastructure: **Docker + Docker Compose**
+**Justification:**
+- Consistent development and production environments
+- Easy local setup with dependency management
+- Container orchestration ready for cloud deployment
+
+---
+
+## API Documentation
+
+### GET /api/rooms/available
+
+**Purpose:** Query available rooms with dynamic pricing
+
+**Query Parameters:**
+- `checkIn` (required): Check-in date (YYYY-MM-DD)
+- `checkOut` (required): Check-out date (YYYY-MM-DD)  
+- `guests` (required): Number of guests (1-10)
+- `type` (optional): Room type (junior|king|presidential)
+- `breakfast` (optional): Include breakfast pricing (boolean)
+- `breakdown` (optional): Include price breakdown (boolean)
+
+**Example Request:**
+```bash
+curl "http://localhost:3000/api/rooms/available?checkIn=2024-12-01&checkOut=2024-12-03&guests=2&type=king&breakfast=true&breakdown=true"
+```
+
+**Example Response:**
+```json
+{
+  "items": [
+    {
+      "roomId": "room-003",
+      "type": "king", 
+      "capacity": 3,
+      "baseRateCents": 9000,
+      "pricing": {
+        "totalCents": 24500,
+        "pricePerNightCents": 12250,
+        "nights": 2,
+        "currency": "USD",
+        "breakdown": [
+          {
+            "date": "2024-11-30",
+            "baseCents": 9000,
+            "weekendUpliftCents": 2250,
+            "lengthDiscountCents": 0,
+            "breakfastCents": 1000,
+            "subtotalCents": 12250
+          }
+        ]
+      }
+    }
+  ],
+  "paging": {
+    "limit": 20,
+    "nextCursor": null
+  }
+}
+```
+
+### POST /api/reservations
+
+**Purpose:** Create a new hotel reservation
+
+**Required Headers:**
+- `Content-Type: application/json`
+- `Idempotency-Key: <unique-key>` (prevents duplicate bookings)
+
+**Request Body:**
+```json
+{
+  "roomId": "room-003",
+  "type": "king",
+  "checkIn": "2024-12-01", 
+  "checkOut": "2024-12-03",
+  "guests": 2,
+  "breakfast": true
+}
+```
+
+**Example Request:**
+```bash
+curl -X POST "http://localhost:3000/api/reservations" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: booking-12345" \
+  -d '{"roomId":"room-003","type":"king","checkIn":"2024-12-01","checkOut":"2024-12-03","guests":2,"breakfast":true}'
+```
+
+**Success Response (201):**
+```json
+{
+  "id": "res-booking-mghbrvhz",
+  "roomId": "room-003",
+  "type": "king",
+  "guests": 2,
+  "breakfast": true,
+  "checkIn": "2024-12-01",
+  "checkOut": "2024-12-03", 
+  "status": "CONFIRMED",
+  "createdAt": "2025-10-08T01:43:48.791Z",
+  "pricing": {
+    "totalCents": 24500,
+    "nights": 2,
+    "currency": "USD",
+    "breakdown": [...]
+  },
+  "requestIdempotencyKey": "booking-12345"
+}
+```
+
+**Error Scenarios:**
+- `400` - Missing Idempotency-Key header
+- `404` - Room not found or not available  
+- `409` - Room already booked for those dates
+- `422` - Invalid date range or business rule violation
+
+---
+
+## Architecture Summary
+
+### Key Design Decisions
+
+1. **Hexagonal Architecture:** Clean separation enables independent testing and technology swapping
+2. **Shared Repository Instances:** Prevents race conditions and ensures data consistency  
+3. **Dynamic Pricing Engine:** Centralized business logic with deterministic rule application
+4. **Stateless Design:** Enables horizontal scaling and simplified deployment
+5. **Comprehensive Validation:** Input validation at API boundary with business validation in domain
+
+### Implementation Validates Design
+
+Our implementation successfully demonstrates:
+- **Port/Adapter Pattern:** Clear interfaces between layers
+- **Business Logic Isolation:** PricingEngine independent of HTTP concerns
+- **Error Handling:** Proper HTTP status codes with meaningful error messages
+- **Data Consistency:** Shared repositories prevent double-booking scenarios
+- **Scalability:** Stateless controllers ready for load balancer distribution
+
+### Trade-offs and Future Improvements
+
+**Current Trade-offs:**
+- In-memory storage limits persistence (addressed by Prisma integration path)
+- Single-service deployment (architecture ready for service splitting)
+- Synchronous processing (async patterns available for high-volume scenarios)
+
+**Future Improvements:**
+1. **Database Integration:** PostgreSQL with Prisma for production persistence
+2. **Observability:** Metrics, distributed tracing, and structured logging
+3. **Advanced Reliability:** Circuit breakers and bulkhead isolation
+4. **Performance:** Redis caching and read replicas
+5. **AI Integration:** Natural language query processing with Ollama
+
+---
+
+## Development Commands
+
+```bash
+# Installation
+npm install
+
+# Development
+npm run dev          # Start dev server with hot reload
+npm run build        # Compile TypeScript
+npm run start        # Start production server
+
+# Testing  
+npm test            # Run test suite
+npm run test:watch  # Run tests in watch mode
+
+# Code Quality
+npm run lint        # ESLint code analysis
+npm run format      # Prettier code formatting
+npm run type-check  # TypeScript compilation check
+```
+---
+
+*This implementation successfully validates the RFC design through working code that solves real StellarStay business problems while demonstrating proper hexagonal architecture patterns.*

@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=file:./dev.db
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+
+  # Optional: Redis for caching (bonus implementation)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Optional: Ollama for AI integration (bonus implementation)
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  ollama_data:

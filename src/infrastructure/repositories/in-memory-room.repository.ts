@@ -1,15 +1,22 @@
 import { RoomRepoPort } from "../../application/ports/room-repo.port";
 import { Room, RoomType, DateRange } from "../../domain/entities/room";
 
+// Base rates should match PricingEngine constants
+const BASE_RATES: Record<RoomType, number> = {
+  junior: 60_00,
+  king: 90_00, 
+  presidential: 150_00,
+};
+
 export class InMemoryRoomRepository implements RoomRepoPort {
   private rooms: Room[] = [
-    // Sample rooms data
-    { id: "room-001", type: "junior", capacity: 2, baseRate: 60_00 },
-    { id: "room-002", type: "junior", capacity: 2, baseRate: 60_00 },
-    { id: "room-003", type: "king", capacity: 3, baseRate: 90_00 },
-    { id: "room-004", type: "king", capacity: 3, baseRate: 90_00 },
-    { id: "room-005", type: "king", capacity: 4, baseRate: 90_00 },
-    { id: "room-006", type: "presidential", capacity: 6, baseRate: 150_00 },
+    // Sample rooms data - using consistent base rates
+    { id: "room-001", type: "junior", capacity: 2, baseRate: BASE_RATES.junior },
+    { id: "room-002", type: "junior", capacity: 2, baseRate: BASE_RATES.junior },
+    { id: "room-003", type: "king", capacity: 3, baseRate: BASE_RATES.king },
+    { id: "room-004", type: "king", capacity: 3, baseRate: BASE_RATES.king },
+    { id: "room-005", type: "king", capacity: 4, baseRate: BASE_RATES.king },
+    { id: "room-006", type: "presidential", capacity: 6, baseRate: BASE_RATES.presidential },
   ];
 
   async findAvailable(params: {

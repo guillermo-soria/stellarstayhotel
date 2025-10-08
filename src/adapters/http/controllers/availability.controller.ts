@@ -23,7 +23,7 @@ export async function getAvailableRoomsController(req: Request, res: Response, n
       guests: query.guests,
       type: query.type,
       breakfast: query.breakfast,
-      includeBreakdown: (req.query.breakdown as string) === 'true', // Optional query param
+      includeBreakdown: query.breakdown, // Use validated breakdown instead of raw query
     });
 
     // Transform to API response format

@@ -11,10 +11,10 @@ export interface QuoteInput {
 
 export interface NightBreakdown {
   date: string;             // YYYY-MM-DD (night)
-  baseCents: number;        // base por noche
-  weekendUpliftCents: number; // +25% si Sáb/Dom
-  lengthDiscountCents: number; // -$4/-$8/-$12 por noche según estadía
-  breakfastCents: number;   // $5 * guests por noche
+  baseCents: number;        // base per night
+  weekendUpliftCents: number; // +25% if Sat/Sun
+  lengthDiscountCents: number; // -$4/-$8/-$12 per night based on stay length
+  breakfastCents: number;   // $5 * guests per night
   subtotalCents: number;    // base + uplift - discount + breakfast
 }
 
@@ -26,16 +26,16 @@ export interface QuoteResult {
 }
 
 /**
- * Reglas:
+ * Pricing Rules (applied in order):
  * - Base rate: Junior $60, King $90, Presidential $150
- * - Weekend uplift: +25% sábado/domingo (aplicado por noche)
- * - Length discounts (por noche, según total de noches):
- *    4–6:  -$4   | 7–9:  -$8   | 10+: -$12
- * - Breakfast: +$5 por huésped por noche
+ * - Weekend uplift: +25% Saturday/Sunday (applied per night)
+ * - Length discounts (per night, based on total nights):
+ *    4–6 nights: -$4   | 7–9 nights: -$8   | 10+ nights: -$12
+ * - Breakfast: +$5 per guest per night
  */
 export class PricingEngine {
   private static BASE: Record<RoomType, number> = {
-    junior: 60_00,        // en centavos
+    junior: 60_00,        // in cents
     king: 90_00,
     presidential: 150_00,
   };
@@ -50,13 +50,13 @@ export class PricingEngine {
 
     const basePerNight = PricingEngine.BASE[roomType];
 
-    const lengthDiscountCents = this.lengthDiscountPerNight(nights); // por noche
+    const lengthDiscountCents = this.lengthDiscountPerNight(nights); // per night
     const breakfastPerNightCents = breakfast ? 5_00 * Math.max(guests, 0) : 0;
 
     let totalCents = 0;
     const perNight: NightBreakdown[] = [];
 
-    // Iterar noches
+    // Iterate through nights
     let d = this.atMidnight(checkIn);
     for (let i = 0; i < nights; i++) {
       const isWeekend = this.isWeekend(d);
@@ -109,11 +109,11 @@ export class PricingEngine {
     const a = this.atMidnight(checkIn).getTime();
     const b = this.atMidnight(checkOut).getTime();
     return Math.round((b - a) / (1000 * 60 * 60 * 24));
-    // checkOut is exclusive (the last night is checkOut-1)
+    // checkOut is exclusive (last night is checkOut-1)
   }
 
   private isWeekend(d: Date): boolean {
-    const day = d.getDay(); // 0 sun, 6 sat
+    const day = d.getDay(); // 0 = Sunday, 6 = Saturday
     return day === 0 || day === 6;
   }
 

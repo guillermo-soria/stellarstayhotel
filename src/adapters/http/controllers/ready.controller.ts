@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { logger } from "../../../infra/logger";
+import { logger } from "../../../infrastructure/logger";
 
 interface ReadinessCheck {
   name: string;

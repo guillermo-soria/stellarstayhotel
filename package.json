@@ -4,9 +4,9 @@
   "description": "StellarStay Hotels - Scalable hotel reservation platform with dynamic pricing",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/infra/server.ts",
+    "dev": "ts-node-dev --respawn --transpile-only src/infrastructure/server.ts",
     "build": "tsc",
-    "start": "node dist/infra/server.js",
+    "start": "node dist/infrastructure/server.js",
     "test": "echo \"(tests will be added)\""
   },
   "repository": {

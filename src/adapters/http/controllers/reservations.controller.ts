@@ -1,13 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import { z } from "zod";
-
-const ReservationBody = z.object({
-  roomId: z.string(),
-  checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  guests: z.number().int().min(1),
-  breakfast: z.boolean().default(false),
-});
 
 export async function createReservationController(req: Request, res: Response, next: NextFunction) {
   try {
@@ -18,8 +9,15 @@ export async function createReservationController(req: Request, res: Response, n
       throw e;
     }
 
-    const body = ReservationBody.parse(req.body);
-    // Stub: call use-case later
+    // req.body is already validated & coerced by Zod
+    const body = req.body as {
+      roomId: string; type: "junior"|"king"|"presidential";
+      checkIn: string; checkOut: string; guests: number; breakfast: boolean;
+    };
+
+    // TODO: call use case, e.g.:
+    // const out = await createReservation.execute(mappedInput);
+
     return res.status(201).json({
       id: "res_stub",
       status: "CONFIRMED",
@@ -28,8 +26,6 @@ export async function createReservationController(req: Request, res: Response, n
       echo: body
     });
   } catch (err) {
-    (err as any).statusCode ||= 400;
-    (err as any).code ||= "INVALID_BODY";
     return next(err);
   }
 }

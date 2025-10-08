@@ -1,4 +1,4 @@
-export type RoomType = "junior" | "king" | "presidential";
+import { RoomType } from "../services/pricing-engine";
 
 export interface DateRange {
   checkIn: string;   // YYYY-MM-DD
@@ -11,3 +11,5 @@ export interface Room {
   capacity: number;
   baseRate: number;
 }
+
+export { RoomType };

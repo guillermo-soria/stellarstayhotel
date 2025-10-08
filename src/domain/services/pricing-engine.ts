@@ -109,7 +109,7 @@ export class PricingEngine {
     const a = this.atMidnight(checkIn).getTime();
     const b = this.atMidnight(checkOut).getTime();
     return Math.round((b - a) / (1000 * 60 * 60 * 24));
-    // checkOut es exclusivo (la última noche es checkOut-1)
+    // checkOut is exclusive (the last night is checkOut-1)
   }
 
   private isWeekend(d: Date): boolean {

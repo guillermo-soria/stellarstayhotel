@@ -19,7 +19,7 @@ describe('API Routes Integration', () => {
         .get('/health')
         .expect(200);
 
-      expect(response.body).toHaveProperty('status', 'healthy');
+      expect(response.body).toHaveProperty('status', 'ok');
       expect(response.body).toHaveProperty('timestamp');
       expect(response.body).toHaveProperty('uptime');
     });

@@ -25,9 +25,12 @@
   },
   "homepage": "https://github.com/guillermo-soria/stellarstayhotel#readme",
   "dependencies": {
+    "@prisma/client": "^6.17.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "pino": "^10.0.0",
+    "prisma": "^6.17.0",
+    "sqlite3": "^5.1.7",
     "zod": "^4.1.12"
   },
   "devDependencies": {

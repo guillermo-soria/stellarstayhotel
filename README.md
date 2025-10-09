@@ -28,6 +28,10 @@ cd stellarstayhotel
 # Install dependencies  
 npm install
 
+# Setup database (first time only)
+npx prisma migrate dev
+npx prisma db seed
+
 # Start development server
 npm run dev
 
@@ -37,8 +41,38 @@ npm test
 # Run integration tests
 npm run test:integration
 
-# Access API
+# Access database (optional)
+npx prisma studio
+```
+
+## Database Setup
+
+The project uses **SQLite** for development and **Prisma** as the ORM.
+
+### First-time setup:
+```bash
+# Generate Prisma client and run migrations
+npx prisma migrate dev
+
+# Seed the database with initial room data
+npx prisma db seed
+```
+
+### Database location:
+- **File**: `prisma/dev.db` (auto-created, not in git)
+- **Access**: Run `npx prisma studio` for web GUI
+- **Schema**: See `prisma/schema.prisma`
+
+### Seeded data:
+- 6 rooms (2 junior, 3 king, 1 presidential)
+- Room IDs: `room-001` through `room-006`
+
+### API Examples
+```bash
+# Check room availability
 curl "http://localhost:3000/api/rooms/available?checkIn=2024-12-01&checkOut=2024-12-03&guests=2&type=king"
+
+# Create reservation
 curl -X POST "http://localhost:3000/api/reservations" \
   -H "Content-Type: application/json" \
   -H "Idempotency-Key: unique-key-123" \

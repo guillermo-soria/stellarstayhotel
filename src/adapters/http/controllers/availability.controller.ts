@@ -3,6 +3,8 @@ import type { AvailabilityQuery } from "../schemas/availability.schema";
 import { GetAvailableRooms } from "../../../application/use-cases/get-available-rooms";
 import { NewInMemoryRoomRepository } from "../../../infrastructure/repositories/new-in-memory-room.repository";
 import { PricingEngine } from "../../../domain/services/pricing-engine";
+import { reliabilityManager } from "../../../infrastructure/reliability/reliability-manager";
+import { logger } from "../../../infrastructure/logger";
 
 // Initialize dependencies
 const roomRepo = new NewInMemoryRoomRepository();
@@ -14,17 +16,25 @@ export async function getAvailableRoomsController(req: Request, res: Response, n
     // Get validated data from middleware
     const query = req.validatedQuery as AvailabilityQuery;
 
-    // Execute use case
-    const rooms = await getAvailableRooms.execute({
-      dateRange: {
-        checkIn: query.checkIn,
-        checkOut: query.checkOut,
-      },
-      guests: query.guests,
-      type: query.type,
-      breakfast: query.breakfast,
-      includeBreakdown: query.breakdown, // Use validated breakdown instead of raw query
-    });
+    // Execute use case with reliability patterns (retry, timeout)
+    const rooms = await reliabilityManager.executeWithReliability(
+      () => getAvailableRooms.execute({
+        dateRange: {
+          checkIn: query.checkIn,
+          checkOut: query.checkOut,
+        },
+        guests: query.guests,
+        type: query.type,
+        breakfast: query.breakfast,
+        includeBreakdown: query.breakdown, // Use validated breakdown instead of raw query
+      }),
+      'get-available-rooms',
+      {
+        maxRetries: 3,
+        timeoutMs: 5000,
+        useCircuitBreaker: true
+      }
+    );
 
     // Transform to API response format
     const response = {

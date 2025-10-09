@@ -1,5 +1,5 @@
-import { RoomRepoPort } from "../../application/ports/room-repo.port";
-import { Room, RoomType, DateRange } from "../../domain/entities/room";
+import { RoomRepoPort, FindAvailableParams, RoomSummary } from "../../application/ports/room-repo.port";
+import { Room, RoomType } from "../../domain/entities/room";
 
 // Base rates should match PricingEngine constants
 const BASE_RATES: Record<RoomType, number> = {
@@ -19,18 +19,7 @@ export class InMemoryRoomRepository implements RoomRepoPort {
     { id: "room-006", type: "presidential", capacity: 6, baseRate: BASE_RATES.presidential },
   ];
 
-  async findAvailable(params: {
-    dateRange: DateRange;
-    guests: number;
-    type?: "junior" | "king" | "presidential";
-    limit?: number;
-    cursor?: string | null;
-  }): Promise<Array<{
-    roomId: string;
-    type: "junior" | "king" | "presidential";
-    capacity: number;
-    baseRate: number;
-  }>> {
+  async findAvailable(params: FindAvailableParams): Promise<{ items: RoomSummary[]; nextCursor: string | null }> {
     // Filter rooms by type if specified
     let availableRooms = this.rooms;
     
@@ -42,7 +31,7 @@ export class InMemoryRoomRepository implements RoomRepoPort {
     availableRooms = availableRooms.filter(room => room.capacity >= params.guests);
 
     // For now, assume all rooms are available (in real impl, check inventory)
-    // TODO: Check actual inventory/reservations
+    // TODO: Check actual inventory/reservations using checkIn/checkOut
     
     // Apply pagination
     const limit = params.limit || 20;
@@ -51,15 +40,28 @@ export class InMemoryRoomRepository implements RoomRepoPort {
     const paginatedRooms = availableRooms.slice(startIndex, endIndex);
     
     // Transform to expected format
-    return paginatedRooms.map(room => ({
-      roomId: room.id,
+    const items: RoomSummary[] = paginatedRooms.map(room => ({
+      id: room.id,
+      number: room.id, // Using id as number for simplicity
       type: room.type,
       capacity: room.capacity,
-      baseRate: room.baseRate,
     }));
+
+    // Calculate next cursor
+    const nextCursor = endIndex < availableRooms.length ? endIndex.toString() : null;
+
+    return { items, nextCursor };
   }
 
-  async findById(id: string): Promise<Room | null> {
-    return this.rooms.find(room => room.id === id) || null;
+  async getById(id: string): Promise<RoomSummary | null> {
+    const room = this.rooms.find(room => room.id === id);
+    if (!room) return null;
+
+    return {
+      id: room.id,
+      number: room.id, // Using id as number for simplicity
+      type: room.type,
+      capacity: room.capacity,
+    };
   }
 }

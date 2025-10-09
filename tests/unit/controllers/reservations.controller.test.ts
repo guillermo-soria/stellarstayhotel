@@ -19,7 +19,7 @@ jest.mock('../../../src/domain/services/pricing-engine', () => ({
   PricingEngine: jest.fn()
 }));
 
-import { newCreateReservationController } from '../../../src/adapters/http/controllers/new-reservations.controller';
+import { createReservationController } from '../../../src/adapters/http/controllers/reservations.controller';
 import { Request, Response, NextFunction } from 'express';
 
 // Extend Request interface to include validatedBody
@@ -33,7 +33,7 @@ interface ErrorWithCode extends Error {
   code?: string;
 }
 
-describe('newCreateReservationController', () => {
+describe('createReservationController', () => {
   let mockRequest: MockRequest;
   let mockResponse: Partial<Response>;
   let mockNext: NextFunction;
@@ -83,7 +83,7 @@ describe('newCreateReservationController', () => {
       created: true
     });
 
-    await newCreateReservationController(
+    await createReservationController(
       mockRequest as Request,
       mockResponse as Response,
       mockNext
@@ -118,7 +118,7 @@ describe('newCreateReservationController', () => {
       created: false
     });
 
-    await newCreateReservationController(
+    await createReservationController(
       mockRequest as Request,
       mockResponse as Response,
       mockNext
@@ -137,7 +137,7 @@ describe('newCreateReservationController', () => {
   it('should return 400 when idempotency key is missing', async () => {
     mockRequest.header = jest.fn().mockReturnValue(undefined);
 
-    await newCreateReservationController(
+    await createReservationController(
       mockRequest as Request,
       mockResponse as Response,
       mockNext
@@ -159,7 +159,7 @@ describe('newCreateReservationController', () => {
 
     mockCreateReservation.execute.mockRejectedValue(error);
 
-    await newCreateReservationController(
+    await createReservationController(
       mockRequest as Request,
       mockResponse as Response,
       mockNext
@@ -180,7 +180,7 @@ describe('newCreateReservationController', () => {
 
     mockCreateReservation.execute.mockRejectedValue(error);
 
-    await newCreateReservationController(
+    await createReservationController(
       mockRequest as Request,
       mockResponse as Response,
       mockNext
@@ -201,7 +201,7 @@ describe('newCreateReservationController', () => {
 
     mockCreateReservation.execute.mockRejectedValue(error);
 
-    await newCreateReservationController(
+    await createReservationController(
       mockRequest as Request,
       mockResponse as Response,
       mockNext
@@ -222,7 +222,7 @@ describe('newCreateReservationController', () => {
 
     mockCreateReservation.execute.mockRejectedValue(error);
 
-    await newCreateReservationController(
+    await createReservationController(
       mockRequest as Request,
       mockResponse as Response,
       mockNext
@@ -243,7 +243,7 @@ describe('newCreateReservationController', () => {
 
     mockCreateReservation.execute.mockRejectedValue(error);
 
-    await newCreateReservationController(
+    await createReservationController(
       mockRequest as Request,
       mockResponse as Response,
       mockNext
@@ -263,7 +263,7 @@ describe('newCreateReservationController', () => {
 
     mockCreateReservation.execute.mockRejectedValue(error);
 
-    await newCreateReservationController(
+    await createReservationController(
       mockRequest as Request,
       mockResponse as Response,
       mockNext
@@ -288,7 +288,7 @@ describe('newCreateReservationController', () => {
       isNewReservation: true
     });
 
-    await newCreateReservationController(
+    await createReservationController(
       mockRequest as Request,
       mockResponse as Response,
       mockNext
@@ -320,7 +320,7 @@ describe('newCreateReservationController', () => {
       isNewReservation: true
     });
 
-    await newCreateReservationController(
+    await createReservationController(
       mockRequest as Request,
       mockResponse as Response,
       mockNext

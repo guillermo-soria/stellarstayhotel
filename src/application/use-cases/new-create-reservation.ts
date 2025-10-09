@@ -1,6 +1,7 @@
 import { ReservationRepoPort } from "../ports/reservation-repo.port";
 import { RoomRepoPort } from "../ports/room-repo.port";
 import { PricingEngine } from "../../domain/services/pricing-engine";
+import { AppError } from "../../infrastructure/errors/app-error";
 
 export class CreateReservation {
   constructor(
@@ -21,19 +22,13 @@ export class CreateReservation {
     // 1) Validaciones de dominio
     const room = await this.rooms.getById(p.roomId);
     if (!room) {
-      const err: any = new Error('ROOM_NOT_FOUND');
-      err.code = 'ROOM_NOT_FOUND';
-      throw err;
+      throw new AppError({ code: 'ROOM_NOT_FOUND', status: 404 });
     }
     if (room.type !== p.type) {
-      const err: any = new Error('ROOM_TYPE_MISMATCH');
-      err.code = 'ROOM_TYPE_MISMATCH';
-      throw err;
+      throw new AppError({ code: 'ROOM_TYPE_MISMATCH', status: 400 });
     }
     if (p.guests > room.capacity) {
-      const err: any = new Error('OVER_CAPACITY');
-      err.code = 'OVER_CAPACITY';
-      throw err;
+      throw new AppError({ code: 'OVER_CAPACITY', status: 400 });
     }
 
     const nights = Math.round(
@@ -41,9 +36,7 @@ export class CreateReservation {
       / (1000*60*60*24)
     );
     if (nights <= 0) {
-      const err: any = new Error('INVALID_RANGE');
-      err.code = 'INVALID_RANGE';
-      throw err;
+      throw new AppError({ code: 'INVALID_RANGE', status: 400 });
     }
 
     // 2) Idempotencia: si ya existe, devolverla (replay-safe)
@@ -53,9 +46,7 @@ export class CreateReservation {
     // 3) Solapamiento
     const overlap = await this.reservations.hasOverlap(p.roomId, p.checkIn, p.checkOut);
     if (overlap) {
-      const err: any = new Error('DATE_OVERLAP');
-      err.code = 'DATE_OVERLAP';
-      throw err;
+      throw new AppError({ code: 'DATE_OVERLAP', status: 409 });
     }
 
     // 4) Precio (única fuente de verdad)

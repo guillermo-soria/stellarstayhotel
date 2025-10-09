@@ -1,4 +1,4 @@
-import { RoomRepoPort, FindAvailableParams, RoomSummary, RoomType } from "../../application/ports/room-repo.port";
+import { RoomRepoPort, FindAvailableParams, RoomSummary } from "../../application/ports/room-repo.port";
 
 const ROOMS: RoomSummary[] = [
   { id: 'r-101', number: '101', type: 'junior', capacity: 2 },

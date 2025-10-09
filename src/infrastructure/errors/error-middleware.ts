@@ -1,10 +1,16 @@
 import { NextFunction, Request, Response } from "express";
+import { isAppError } from "./app-error";
 
-export function errorMiddleware(err: any, _req: Request, res: Response, _next: NextFunction) {
-  const status = err.statusCode ?? 500;
-  const code = err.code ?? "INTERNAL_ERROR";
-  const message = err.message ?? "Internal server error";
-  const details = err.details;
+export function errorMiddleware(err: unknown, _req: Request, res: Response, _next: NextFunction) {
+  if (isAppError(err)) {
+    return res.status(err.status).json({ error: { code: err.code, message: err.message, details: err.details } });
+  }
 
-  res.status(status).json({ error: { code, message, details } });
+  const unexpected = err as Error | undefined;
+  return res.status(500).json({
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: unexpected?.message ?? 'Internal server error'
+    }
+  });
 }

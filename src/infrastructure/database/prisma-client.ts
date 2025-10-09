@@ -10,10 +10,11 @@ class PrismaClientSingleton {
         log: ['query', 'info', 'warn', 'error'],
       });
 
-      // Handle graceful shutdown
-      process.on('beforeExit', async () => {
-        await PrismaClientSingleton.instance.$disconnect();
-        logger.info('Prisma client disconnected');
+      // Handle graceful shutdown (avoid async handler returning a promise)
+      process.on('beforeExit', () => {
+        void PrismaClientSingleton.instance.$disconnect()
+          .then(() => logger.info('Prisma client disconnected'))
+          .catch(err => logger.error({ err }, 'Error disconnecting Prisma client'));
       });
     }
 
@@ -26,8 +27,9 @@ class PrismaClientSingleton {
       await client.$connect();
       logger.info('Prisma client connected successfully');
     } catch (error) {
-      logger.error(`Failed to connect Prisma client: ${error}`);
-      throw error;
+      const err = error as Error;
+      logger.error({ err }, 'Failed to connect Prisma client');
+      throw err;
     }
   }
 

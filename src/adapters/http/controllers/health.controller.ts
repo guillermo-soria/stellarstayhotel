@@ -31,7 +31,7 @@ export async function healthController(_req: Request, res: Response) {
     }
 
     return res.json(health);
-  } catch (error) {
+  } catch {
     return res.status(503).json({
       status: "error",
       timestamp: new Date().toISOString(),
@@ -76,7 +76,7 @@ export async function readyController(_req: Request, res: Response) {
     };
 
     return res.status(allHealthy ? 200 : 503).json(readiness);
-  } catch (error) {
+  } catch {
     return res.status(503).json({
       status: "not_ready",
       timestamp: new Date().toISOString(),

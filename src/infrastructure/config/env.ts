@@ -26,7 +26,6 @@ export const env = (() => {
   if (!parsed.success) {
     // Show a clean error and abort startup (fail fast)
     const issues = parsed.error.issues.map(i => `${i.path.join(".")}: ${i.message}`).join("; ");
-    // eslint-disable-next-line no-console
     console.error("[ENV] Invalid environment configuration:", issues);
     process.exit(1);
   }

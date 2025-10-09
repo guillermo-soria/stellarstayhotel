@@ -1,4 +1,4 @@
-import { RetryPolicy, TimeoutManager, CircuitBreaker } from './types';
+import { RetryPolicy } from './types';
 import { logger } from '../logger';
 
 export interface ReliabilityConfig {
@@ -114,15 +114,16 @@ export class ReliabilityPatterns {
       new Promise<T>((_, reject) => {
         setTimeout(() => {
           logger.warn(`Timeout: ${defaultMessage}`);
-          reject(new Error(timeoutMessage || defaultMessage));
+          reject(new Error(timeoutMessage ?? defaultMessage));
         }, timeoutMs);
       })
     ]);
   }
 
-  private isClientError(error: any): boolean {
-    // Check if it's an HTTP client error (4xx)
-    return error?.status >= 400 && error?.status < 500;
+  private isClientError(e: unknown): e is { status: number } {
+    if (typeof e !== 'object' || e === null) return false;
+    const maybe = e as { status?: unknown };
+    return typeof maybe.status === 'number' && maybe.status >= 400 && maybe.status < 500;
   }
 
   private calculateDelay(attempt: number, config: RetryPolicy): number {
@@ -155,7 +156,7 @@ export class SimpleCircuitBreaker {
       timeout: number;
       monitoringPeriod: number;
     },
-    private serviceName: string = 'unknown-service'
+    private serviceName = 'unknown-service'
   ) {}
 
   async execute<T>(operation: () => Promise<T>): Promise<T> {

@@ -34,7 +34,7 @@ export class InMemoryRoomRepository implements RoomRepoPort {
     // TODO: Check actual inventory/reservations using checkIn/checkOut
     
     // Apply pagination
-    const limit = params.limit || 20;
+    const limit = params.limit ?? 20;
     const startIndex = params.cursor ? parseInt(params.cursor) : 0;
     const endIndex = startIndex + limit;
     const paginatedRooms = availableRooms.slice(startIndex, endIndex);

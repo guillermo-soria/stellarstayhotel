@@ -4,12 +4,12 @@ export interface PaymentRequest {
   amount: number;
   currency: string;
   paymentMethod: PaymentMethod;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface PaymentMethod {
   type: 'credit_card' | 'debit_card' | 'paypal' | 'bank_transfer';
-  details: Record<string, any>;
+  details: Record<string, unknown>;
 }
 
 export interface PaymentResult {
@@ -70,7 +70,7 @@ export interface ReservationAuditEvent {
   eventType: 'created' | 'modified' | 'cancelled';
   userId?: string;
   timestamp: Date;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface PricingAuditEvent {

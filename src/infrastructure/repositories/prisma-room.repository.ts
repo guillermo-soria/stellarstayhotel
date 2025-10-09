@@ -71,7 +71,7 @@ export class PrismaRoomRepository implements RoomRepoPort {
       
       const roomSummaries = items.map(room => ({
         id: room.id,
-        number: room.id, // Using id as number for now
+        number: room.id, // Using id as number for now (consistent with getById)
         type: room.type as RoomType,
         capacity: room.capacity
       }));

@@ -1,19 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { ReservationBody } from "../schemas/reservation.schema";
 
-import { PrismaReservationRepository } from "../../../infrastructure/repositories/prisma-reservation.repository";
-import { PrismaRoomRepository } from "../../../infrastructure/repositories/prisma-room.repository";
-import { CreateReservation } from "../../../application/use-cases/new-create-reservation";
-import { PricingEngine } from "../../../domain/services/pricing-engine";
-import { reliabilityManager } from "../../../infrastructure/reliability/reliability-manager";
-
-const reservationsRepo = new PrismaReservationRepository();
-const roomsRepo = new PrismaRoomRepository();
-const pricing = new PricingEngine();
-const createReservation = new CreateReservation(reservationsRepo, roomsRepo, pricing);
+import { createReservation } from '../../../infrastructure/container';
+import { reliabilityManager } from '../../../infrastructure/reliability/reliability-manager';
 
 // Export for testing
-export { reservationsRepo };
+export { createReservation };
 
 function extractErrorCode(err: unknown): string | undefined {
   if (typeof err !== 'object' || err === null) return undefined;

@@ -1,7 +1,7 @@
 # StellarStay Hotels - Backend Assessment
 
 **Author:** Guillermo Soria  
-**Date:** 2025-10-07  
+**Date:** 2025-10-08  
 **Assessment Duration:** 2 Days  
 **Implementation Option:** A (Room Search + Booking)
 
@@ -16,6 +16,7 @@ StellarStay Hotels scalable reservation system implementing hexagonal architectu
 - ✅ **Dynamic Pricing Engine** - Weekend uplift, length discounts, breakfast options
 - ✅ **Reliability Patterns** - Retry policies, timeout management, error handling
 - ✅ **Data Consistency** - Shared repository instances prevent double-booking
+- ✅ **Comprehensive Testing** - 132 tests passing (integration + unit)
 
 ## Quick Start
 
@@ -30,8 +31,11 @@ npm install
 # Start development server
 npm run dev
 
-# Run tests
+# Run all tests (132 tests)
 npm test
+
+# Run integration tests
+npm run test:integration
 
 # Access API
 curl "http://localhost:3000/api/rooms/available?checkIn=2024-12-01&checkOut=2024-12-03&guests=2&type=king"

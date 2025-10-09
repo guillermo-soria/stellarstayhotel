@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import type { AvailabilityQuery } from "../schemas/availability.schema";
 import { GetAvailableRooms } from "../../../application/use-cases/get-available-rooms";
-import { NewInMemoryRoomRepository } from "../../../infrastructure/repositories/new-in-memory-room.repository";
+import { PrismaRoomRepository } from "../../../infrastructure/repositories/prisma-room.repository";
 import { PricingEngine } from "../../../domain/services/pricing-engine";
 import { reliabilityManager } from "../../../infrastructure/reliability/reliability-manager";
 import { logger } from "../../../infrastructure/logger";
 
 // Initialize dependencies
-const roomRepo = new NewInMemoryRoomRepository();
+const roomRepo = new PrismaRoomRepository();
 const pricingEngine = new PricingEngine();
 const getAvailableRooms = new GetAvailableRooms(roomRepo, pricingEngine);
 

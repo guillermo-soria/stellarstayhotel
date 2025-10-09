@@ -73,7 +73,7 @@ describe('API Routes Integration', () => {
   describe('Reservation API', () => {
     it('POST /api/reservations should create reservation', async () => {
       const reservationData = {
-        roomId: 'r-101',
+        roomId: 'room-001',
         type: 'junior',
         checkIn: '2024-12-01',
         checkOut: '2024-12-03',
@@ -93,7 +93,7 @@ describe('API Routes Integration', () => {
 
     it('should enforce idempotency', async () => {
       const reservationData = {
-        roomId: 'r-102',
+        roomId: 'room-002',
         type: 'junior',
         checkIn: '2024-12-04',
         checkOut: '2024-12-06',

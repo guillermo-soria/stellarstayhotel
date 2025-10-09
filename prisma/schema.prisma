@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  id          String   @id
+  type        String   // 'junior', 'king', 'presidential'
+  capacity    Int
+  baseRate    Int      // Base price in cents
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  reservations Reservation[]
+
+  @@map("rooms")
+}
+
+model Reservation {
+  id               String   @id
+  roomId           String
+  type             String   // Room type for validation
+  checkIn          DateTime
+  checkOut         DateTime
+  guests           Int
+  breakfast        Boolean  @default(false)
+  totalCents       Int
+  status           String   @default("CONFIRMED") // 'CONFIRMED', 'CANCELLED'
+  idempotencyKey   String?  @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  room             Room     @relation(fields: [roomId], references: [id])
+
+  // Indexes for performance
+  @@index([roomId, checkIn, checkOut])
+  @@index([checkIn, checkOut])
+  @@index([idempotencyKey])
+  @@map("reservations")
+}
+
+model PricingRule {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // 'weekend_uplift', 'length_discount', 'breakfast_addon'
+  config      String   // JSON configuration
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("pricing_rules")
+}

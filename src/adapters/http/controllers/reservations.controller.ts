@@ -1,15 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import { ReservationBody } from "../schemas/reservation.schema";
 
-import { NewInMemoryReservationRepository } from "../../../infrastructure/repositories/new-in-memory-reservation.repository";
-import { NewInMemoryRoomRepository } from "../../../infrastructure/repositories/new-in-memory-room.repository";
+import { PrismaReservationRepository } from "../../../infrastructure/repositories/prisma-reservation.repository";
+import { PrismaRoomRepository } from "../../../infrastructure/repositories/prisma-room.repository";
 import { CreateReservation } from "../../../application/use-cases/new-create-reservation";
 import { PricingEngine } from "../../../domain/services/pricing-engine";
 import { reliabilityManager } from "../../../infrastructure/reliability/reliability-manager";
 import { logger } from "../../../infrastructure/logger";
 
-const reservationsRepo = new NewInMemoryReservationRepository();
-const roomsRepo = new NewInMemoryRoomRepository();
+const reservationsRepo = new PrismaReservationRepository();
+const roomsRepo = new PrismaRoomRepository();
 const pricing = new PricingEngine();
 const createReservation = new CreateReservation(reservationsRepo, roomsRepo, pricing);
 

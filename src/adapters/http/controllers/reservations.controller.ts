@@ -6,7 +6,6 @@ import { PrismaRoomRepository } from "../../../infrastructure/repositories/prism
 import { CreateReservation } from "../../../application/use-cases/new-create-reservation";
 import { PricingEngine } from "../../../domain/services/pricing-engine";
 import { reliabilityManager } from "../../../infrastructure/reliability/reliability-manager";
-import { logger } from "../../../infrastructure/logger";
 
 const reservationsRepo = new PrismaReservationRepository();
 const roomsRepo = new PrismaRoomRepository();
@@ -16,6 +15,12 @@ const createReservation = new CreateReservation(reservationsRepo, roomsRepo, pri
 // Export for testing
 export { reservationsRepo };
 
+function extractErrorCode(err: unknown): string | undefined {
+  if (typeof err !== 'object' || err === null) return undefined;
+  const maybe = err as { code?: unknown };
+  return typeof maybe.code === 'string' ? maybe.code : undefined;
+}
+
 export async function createReservationController(req: Request, res: Response, next: NextFunction) {
   try {
     const idem = req.header("Idempotency-Key");
@@ -23,7 +28,10 @@ export async function createReservationController(req: Request, res: Response, n
       return res.status(400).json({ error: { code: "MISSING_IDEMPOTENCY_KEY", message: "Header Idempotency-Key requerido" }});
     }
 
-    const body = (req as any).validatedBody as ReservationBody;
+    const body = (req as Request & { validatedBody?: ReservationBody }).validatedBody;
+    if (!body) {
+      return res.status(400).json({ error: { code: "BODY_NOT_VALIDATED", message: "Body no validado" }});
+    }
 
     // Execute reservation creation with reliability patterns
     const result = await reliabilityManager.executeWithReliability(
@@ -65,8 +73,8 @@ export async function createReservationController(req: Request, res: Response, n
         requestIdempotencyKey: idem
       });
     }
-  } catch (err: any) {
-    const code = err?.code || err?.message;
+  } catch (err: unknown) {
+    const code = extractErrorCode(err) ?? (err instanceof Error ? err.message : 'UNKNOWN_ERROR');
     if (code === 'ROOM_NOT_FOUND')    return res.status(404).json({ error: { code, message: 'Room no encontrada' }});
     if (code === 'ROOM_TYPE_MISMATCH')return res.status(400).json({ error: { code, message: 'Tipo de room no coincide' }});
     if (code === 'OVER_CAPACITY')     return res.status(400).json({ error: { code, message: 'Guests exceden capacidad' }});

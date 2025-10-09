@@ -128,7 +128,22 @@ export class PrismaReservationRepository implements ReservationRepoPort {
     }
   }
 
-  private mapToDTO(reservation: any): ReservationDTO {
+  private mapToDTO(reservation: {
+    id: string;
+    roomId: string;
+    checkIn: Date;
+    checkOut: Date;
+    guests: number;
+    breakfast: boolean;
+    totalCents: number;
+    status: string;
+    createdAt: Date;
+    idempotencyKey: string | null;
+  }): ReservationDTO {
+    const allowed = ['CONFIRMED','PENDING','CANCELLED'] as const;
+    type Status = typeof allowed[number];
+    const isStatus = (v: unknown): v is Status => typeof v === 'string' && (allowed as readonly string[]).includes(v);
+    const status: Status = isStatus(reservation.status) ? reservation.status : 'CONFIRMED';
     return {
       id: reservation.id,
       roomId: reservation.roomId,
@@ -137,9 +152,9 @@ export class PrismaReservationRepository implements ReservationRepoPort {
       guests: reservation.guests,
       breakfast: reservation.breakfast,
       totalCents: reservation.totalCents,
-      status: reservation.status,
+      status,
       createdAt: reservation.createdAt,
-      idempotencyKey: reservation.idempotencyKey
+      idempotencyKey: reservation.idempotencyKey ?? undefined
     };
   }
 }

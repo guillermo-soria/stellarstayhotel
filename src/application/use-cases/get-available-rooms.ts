@@ -53,14 +53,14 @@ export class GetAvailableRooms {
           checkIn: new Date(params.dateRange.checkIn),
           checkOut: new Date(params.dateRange.checkOut),
           guests: params.guests,
-          breakfast: params.breakfast || false,
+          breakfast: params.breakfast ?? false,
         };
 
         const quote = this.pricingEngine.quote(quoteInput);
         const avgPricePerNight = Math.round(quote.totalCents / quote.nights);
 
         // Get base rate from pricing engine static property
-        const baseRate = (this.pricingEngine as any).constructor.BASE[room.type];
+        const baseRate = PricingEngine.getBaseRate(room.type);
 
         roomsWithPricing.push({
           roomId: room.id,

@@ -4,7 +4,6 @@ import { GetAvailableRooms } from "../../../application/use-cases/get-available-
 import { PrismaRoomRepository } from "../../../infrastructure/repositories/prisma-room.repository";
 import { PricingEngine } from "../../../domain/services/pricing-engine";
 import { reliabilityManager } from "../../../infrastructure/reliability/reliability-manager";
-import { logger } from "../../../infrastructure/logger";
 
 // Initialize dependencies
 const roomRepo = new PrismaRoomRepository();

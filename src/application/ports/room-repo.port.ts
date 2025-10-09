@@ -1,5 +1,3 @@
-import { DateRange } from "../../domain/entities/room";
-
 export type RoomType = 'junior' | 'king' | 'presidential';
 
 export interface FindAvailableParams {

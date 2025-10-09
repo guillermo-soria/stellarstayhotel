@@ -40,6 +40,10 @@ export class PricingEngine {
     presidential: 150_00,
   };
 
+  static getBaseRate(type: RoomType): number {
+    return PricingEngine.BASE[type];
+  }
+
   quote(input: QuoteInput): QuoteResult {
     const { roomType, checkIn, checkOut, guests, breakfast = false } = input;
 

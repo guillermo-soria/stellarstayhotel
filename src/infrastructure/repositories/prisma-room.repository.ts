@@ -2,6 +2,7 @@ import { RoomType } from '../../domain/entities/room';
 import { RoomRepoPort, RoomSummary, FindAvailableParams } from '../../application/ports/room-repo.port';
 import { prismaClient } from '../database/prisma-client';
 import { logger } from '../logger';
+import type { Prisma } from '../../generated/prisma';
 
 export class PrismaRoomRepository implements RoomRepoPort {
   async getById(id: string): Promise<RoomSummary | null> {
@@ -30,20 +31,12 @@ export class PrismaRoomRepository implements RoomRepoPort {
     try {
       const { checkIn, checkOut, guests, type, limit = 20, cursor } = params;
       
-      // Build where clause
-      const where: any = {
+      const where: Prisma.RoomWhereInput = {
         isActive: true,
-        capacity: { gte: guests }
+        capacity: { gte: guests },
+        ...(type ? { type } : {}),
+        ...(cursor ? { id: { gt: cursor } } : {})
       };
-
-      if (type) {
-        where.type = type;
-      }
-
-      // Add cursor pagination
-      if (cursor) {
-        where.id = { gt: cursor };
-      }
 
       // Find rooms that don't have conflicting reservations
       const rooms = await prismaClient.room.findMany({

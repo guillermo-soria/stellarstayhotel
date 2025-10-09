@@ -1,5 +1,3 @@
-import { Reservation } from "../../domain/entities/reservation";
-
 export interface CreateReservationParams {
   roomId: string;
   checkIn: Date;

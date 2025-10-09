@@ -10,6 +10,13 @@ export interface OperationMetrics {
   lastExecuted: Date;
 }
 
+interface CircuitBreakerState {
+  state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+  failures: number;
+  nextAttempt: number;
+  serviceName: string;
+}
+
 /**
  * Centralized reliability management service
  * Handles retry policies, timeouts, and circuit breakers for all operations
@@ -121,13 +128,11 @@ export class ReliabilityManager {
   /**
    * Get circuit breaker states for monitoring
    */
-  getCircuitBreakerStates() {
-    const states: any[] = [];
+  getCircuitBreakerStates(): ({ name: string } & CircuitBreakerState)[] {
+    const states: ({ name: string } & CircuitBreakerState)[] = [];
     this.circuitBreakers.forEach((breaker, name) => {
-      states.push({
-        name,
-        ...breaker.getState()
-      });
+      const state = breaker.getState() as CircuitBreakerState;
+      states.push({ name, ...state });
     });
     return states;
   }

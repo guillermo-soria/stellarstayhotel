@@ -3,6 +3,10 @@ const mockCreateReservation = {
   execute: jest.fn()
 };
 
+const mockReliabilityManager = {
+  executeWithReliability: jest.fn()
+};
+
 jest.mock('../../../src/infrastructure/repositories/new-in-memory-reservation.repository', () => ({
   NewInMemoryReservationRepository: jest.fn()
 }));
@@ -17,6 +21,18 @@ jest.mock('../../../src/application/use-cases/new-create-reservation', () => ({
 
 jest.mock('../../../src/domain/services/pricing-engine', () => ({
   PricingEngine: jest.fn()
+}));
+
+jest.mock('../../../src/infrastructure/reliability/reliability-manager', () => ({
+  reliabilityManager: mockReliabilityManager
+}));
+
+jest.mock('../../../src/infrastructure/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn()
+  }
 }));
 
 import { createReservationController } from '../../../src/adapters/http/controllers/reservations.controller';
@@ -58,6 +74,11 @@ describe('createReservationController', () => {
     };
 
     mockNext = jest.fn();
+
+    // Configure reliability manager mock to pass through calls
+    mockReliabilityManager.executeWithReliability.mockImplementation(
+      async (operation) => await operation()
+    );
   });
 
   afterEach(() => {

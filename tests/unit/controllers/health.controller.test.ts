@@ -1,3 +1,13 @@
+// Mock reliability manager
+const mockReliabilityManager = {
+  getMetrics: jest.fn().mockReturnValue([]),
+  getCircuitBreakerStates: jest.fn().mockReturnValue([])
+};
+
+jest.mock('../../../src/infrastructure/reliability/reliability-manager', () => ({
+  reliabilityManager: mockReliabilityManager
+}));
+
 import { healthController, readyController } from '../../../src/adapters/http/controllers/health.controller';
 import { Request, Response } from 'express';
 
@@ -39,7 +49,11 @@ describe('Health Controllers', () => {
           timestamp: expect.any(String),
           uptime: expect.any(Number),
           checks: {
-            service: 'healthy'
+            service: 'healthy',
+            reliability: expect.objectContaining({
+              metrics: expect.any(Array),
+              circuitBreakers: expect.any(Array)
+            })
           }
         })
       );
@@ -155,7 +169,9 @@ describe('Health Controllers', () => {
           checks: expect.objectContaining({
             memory: 'healthy',
             process: 'healthy',
-            memoryUsageMB: 100
+            reliability: 'healthy',
+            memoryUsageMB: 100,
+            circuitBreakers: expect.any(Array)
           })
         })
       );

@@ -1,8 +1,13 @@
 import { Request, Response } from "express";
+import { reliabilityManager } from "../../../infrastructure/reliability/reliability-manager";
 
 export async function healthController(_req: Request, res: Response) {
   try {
     const startTime = Date.now();
+    
+    // Get reliability metrics
+    const reliabilityMetrics = reliabilityManager.getMetrics();
+    const circuitBreakerStates = reliabilityManager.getCircuitBreakerStates();
     
     // Basic health check - service is running
     const health = {
@@ -10,7 +15,11 @@ export async function healthController(_req: Request, res: Response) {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       checks: {
-        service: "healthy"
+        service: "healthy",
+        reliability: {
+          metrics: reliabilityMetrics,
+          circuitBreakers: circuitBreakerStates
+        }
       }
     };
 
@@ -38,13 +47,19 @@ export async function readyController(_req: Request, res: Response) {
     // Readiness check - basic checks without external dependencies
     const checks = {
       memory: "unknown",
-      process: "healthy"
+      process: "healthy",
+      reliability: "healthy"
     };
 
     // Check memory usage
     const memUsage = process.memoryUsage();
     const memUsageMB = Math.round(memUsage.heapUsed / 1024 / 1024);
     checks.memory = memUsageMB < 200 ? "healthy" : "warning"; // 200MB threshold
+
+    // Check circuit breakers - if any are open, mark as degraded
+    const circuitBreakerStates = reliabilityManager.getCircuitBreakerStates();
+    const hasOpenCircuitBreakers = circuitBreakerStates.some(state => state.state === 'OPEN');
+    checks.reliability = hasOpenCircuitBreakers ? "degraded" : "healthy";
 
     const allHealthy = Object.values(checks).every(status => status === "healthy");
     const responseTime = Date.now() - startTime;
@@ -55,7 +70,8 @@ export async function readyController(_req: Request, res: Response) {
       responseTime: `${responseTime}ms`,
       checks: {
         ...checks,
-        memoryUsageMB: memUsageMB
+        memoryUsageMB: memUsageMB,
+        circuitBreakers: circuitBreakerStates
       }
     };
 

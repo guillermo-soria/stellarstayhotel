@@ -5,6 +5,8 @@ import { NewInMemoryReservationRepository } from "../../../infrastructure/reposi
 import { NewInMemoryRoomRepository } from "../../../infrastructure/repositories/new-in-memory-room.repository";
 import { CreateReservation } from "../../../application/use-cases/new-create-reservation";
 import { PricingEngine } from "../../../domain/services/pricing-engine";
+import { reliabilityManager } from "../../../infrastructure/reliability/reliability-manager";
+import { logger } from "../../../infrastructure/logger";
 
 const reservationsRepo = new NewInMemoryReservationRepository();
 const roomsRepo = new NewInMemoryRoomRepository();
@@ -23,15 +25,24 @@ export async function createReservationController(req: Request, res: Response, n
 
     const body = (req as any).validatedBody as ReservationBody;
 
-    const result = await createReservation.execute({
-      roomId: body.roomId,
-      type: body.type,
-      checkIn: new Date(body.checkIn),
-      checkOut: new Date(body.checkOut),
-      guests: body.guests,
-      breakfast: body.breakfast ?? false,
-      idempotencyKey: idem
-    });
+    // Execute reservation creation with reliability patterns
+    const result = await reliabilityManager.executeWithReliability(
+      () => createReservation.execute({
+        roomId: body.roomId,
+        type: body.type,
+        checkIn: new Date(body.checkIn),
+        checkOut: new Date(body.checkOut),
+        guests: body.guests,
+        breakfast: body.breakfast ?? false,
+        idempotencyKey: idem
+      }),
+      'create-reservation',
+      {
+        maxRetries: 2, // Fewer retries for mutations to avoid duplicate reservations
+        timeoutMs: 7000,
+        useCircuitBreaker: true
+      }
+    );
 
     const r = result.reservation;
     res.setHeader("Location", `/api/reservations/${r.id}`);

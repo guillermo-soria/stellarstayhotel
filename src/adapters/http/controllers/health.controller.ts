@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { reliabilityManager } from "../../../infrastructure/reliability/reliability-manager";
 import { inMemoryCache, availabilityVersionProvider } from "../../../infrastructure/container";
 import { env } from "../../../infrastructure/config/env";
+import { prismaClient } from '../../../infrastructure/database/prisma-client';
 
 export async function healthController(_req: Request, res: Response) {
   try {
@@ -70,6 +71,16 @@ export async function readyController(_req: Request, res: Response) {
     const hasOpenCircuitBreakers = circuitBreakerStates.some(state => state.state === 'OPEN');
     checks.reliability = hasOpenCircuitBreakers ? "degraded" : "healthy";
 
+    // DB health check (real ping)
+    let dbStatus = 'unknown';
+    try {
+      await prismaClient.$queryRaw`SELECT 1`;
+      dbStatus = 'healthy';
+    } catch (err) {
+      dbStatus = 'unreachable';
+    }
+    checks.db = dbStatus;
+
     // Cache readiness (non-blocking diagnostic info)
     const cacheStats = inMemoryCache.stats?.() ?? { hits: 0, misses: 0, hitRate: 0 };
     const cache = {
@@ -88,7 +99,7 @@ export async function readyController(_req: Request, res: Response) {
     const responseTime = Date.now() - startTime;
 
     const readiness = {
-      status: allHealthy ? "ready" : "not_ready",
+      status: allHealthy && dbStatus === 'healthy' ? "ready" : "not_ready",
       timestamp: new Date().toISOString(),
       responseTime: `${responseTime}ms`,
       checks: {

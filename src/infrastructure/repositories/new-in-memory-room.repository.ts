@@ -19,7 +19,7 @@ export class NewInMemoryRoomRepository implements RoomRepoPort {
     }
     
     const items = filtered.slice(0, limit);
-    const nextCursor = filtered.length > limit ? filtered[limit - 1].id : null;
+    const nextCursor = items.length === limit ? items[items.length - 1].id : null;
     return { items, nextCursor };
   }
 

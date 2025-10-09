@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/8</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/8</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -84,32 +84,32 @@
 <a name='L19'></a><a href='#L19'>19</a>
 <a name='L20'></a><a href='#L20'>20</a>
 <a name='L21'></a><a href='#L21'>21</a>
-<a name='L22'></a><a href='#L22'>22</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L22'></a><a href='#L22'>22</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { z } from "zod";</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { z } from "zod";
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >RoomType = z.enum(["junior", "king", "presidential"]);</span>
+export const RoomType = z.enum(["junior", "king", "presidential"]);
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >AvailabilityQuerySchema = z.object({</span>
+export const AvailabilityQuerySchema = z.object({
   checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   guests: z.coerce.number().int().min(1),
@@ -117,12 +117,12 @@ export const <span class="cstat-no" title="statement not covered" >AvailabilityQ
   breakfast: z.coerce.boolean().optional().default(false), // Add breakfast support
   breakdown: z.coerce.boolean().optional().default(false), // Add breakdown support
 })
-.refine(<span class="fstat-no" title="function not covered" >(q</span>) =&gt; <span class="cstat-no" title="statement not covered" >q.checkOut &gt; q.checkIn,</span> { message: "checkOut must be after checkIn", path: ["checkOut"] })
-.refine(<span class="fstat-no" title="function not covered" >(q</span>) =&gt; {
-  const inD = <span class="cstat-no" title="statement not covered" >new Date(q.checkIn);</span>
-  const outD = <span class="cstat-no" title="statement not covered" >new Date(q.checkOut);</span>
-  const nights = <span class="cstat-no" title="statement not covered" >Math.round((+outD - +inD) / 86_400_000);</span>
-<span class="cstat-no" title="statement not covered" >  return nights &gt; 0 &amp;&amp; nights &lt;= 30;</span>
+.refine((q) =&gt; q.checkOut &gt; q.checkIn, { message: "checkOut must be after checkIn", path: ["checkOut"] })
+.refine((q) =&gt; {
+  const inD = new Date(q.checkIn);
+  const outD = new Date(q.checkOut);
+  const nights = Math.round((+outD - +inD) / 86_400_000);
+  return nights &gt; 0 &amp;&amp; nights &lt;= 30;
 }, { message: "stay length must be 1..30 nights", path: ["checkOut"] });
 &nbsp;
 export type AvailabilityQuery = z.infer&lt;typeof AvailabilityQuerySchema&gt;;
@@ -133,7 +133,7 @@ export type AvailabilityQuery = z.infer&lt;typeof AvailabilityQuerySchema&gt;;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-08T22:51:41.265Z
+                at 2025-10-09T00:11:55.686Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

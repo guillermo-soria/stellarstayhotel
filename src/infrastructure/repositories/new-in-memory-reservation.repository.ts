@@ -43,6 +43,12 @@ export class NewInMemoryReservationRepository implements ReservationRepoPort {
     return id ? (STORE.get(id) ?? null) : null;
   }
 
+  // Test helper method to clear all data
+  clearAll() {
+    STORE.clear();
+    BY_IDEMPOTENCY.clear();
+  }
+
   async hasOverlap(roomId: string, checkIn: Date, checkOut: Date): Promise<boolean> {
     for (const r of STORE.values()) {
       if (r.roomId !== roomId) continue;

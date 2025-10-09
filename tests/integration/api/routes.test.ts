@@ -2,7 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import { router } from '../../../src/adapters/http/routes';
 import { errorMiddleware } from '../../../src/infrastructure/errors/error-middleware';
-import { reservationsRepo } from '../../../src/adapters/http/controllers/reservations.controller';
+import { reservationRepo } from '../../../src/infrastructure/container';
 
 describe('API Routes Integration', () => {
   let app: express.Application;
@@ -16,7 +16,7 @@ describe('API Routes Integration', () => {
 
   beforeEach(() => {
     // Clear repository state between tests
-    reservationsRepo.clearAll();
+    reservationRepo.clearAll();
   });
 
   describe('Health Endpoints', () => {

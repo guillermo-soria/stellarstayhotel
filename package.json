@@ -31,6 +31,7 @@
   "homepage": "https://github.com/guillermo-soria/stellarstayhotel#readme",
   "dependencies": {
     "@prisma/client": "^6.17.0",
+    "axios": "^1.12.2",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "pino": "^10.0.0",

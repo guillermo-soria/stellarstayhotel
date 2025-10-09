@@ -11,6 +11,9 @@ const roomsRepo = new NewInMemoryRoomRepository();
 const pricing = new PricingEngine();
 const createReservation = new CreateReservation(reservationsRepo, roomsRepo, pricing);
 
+// Export for testing
+export { reservationsRepo };
+
 export async function newCreateReservationController(req: Request, res: Response, next: NextFunction) {
   try {
     const idem = req.header("Idempotency-Key");

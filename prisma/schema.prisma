@@ -11,41 +11,57 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum RoomType {
+  junior
+  king
+  presidential
+}
+
+enum ReservationStatus {
+  CONFIRMED
+  PENDING
+  CANCELLED
+}
+
 model Room {
   id          String   @id
-  type        String   // 'junior', 'king', 'presidential'
+  type        RoomType
   capacity    Int
-  baseRate    Int      // Base price in cents
+  baseRate    Int
   isActive    Boolean  @default(true)
+  availabilityVersion Int @default(0) // for cache invalidation
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
   reservations Reservation[]
 
+  @@index([type, capacity, isActive])
   @@map("rooms")
 }
 
 model Reservation {
-  id               String   @id
+  id               String            @id
   roomId           String
-  type             String   // Room type for validation
+  type             RoomType          // Denormalized for historical integrity
   checkIn          DateTime
   checkOut         DateTime
   guests           Int
-  breakfast        Boolean  @default(false)
+  breakfast        Boolean           @default(false)
   totalCents       Int
-  status           String   @default("CONFIRMED") // 'CONFIRMED', 'CANCELLED'
-  idempotencyKey   String?  @unique
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  status           ReservationStatus @default(CONFIRMED)
+  idempotencyKey   String?           @unique
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  customerId       String?           // future expansion
 
   // Relations
-  room             Room     @relation(fields: [roomId], references: [id])
+  room             Room              @relation(fields: [roomId], references: [id])
 
   // Indexes for performance
   @@index([roomId, checkIn, checkOut])
   @@index([checkIn, checkOut])
+  @@index([status])
   @@index([idempotencyKey])
   @@map("reservations")
 }
@@ -59,5 +75,6 @@ model PricingRule {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@index([isActive])
   @@map("pricing_rules")
 }

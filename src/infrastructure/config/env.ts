@@ -19,6 +19,9 @@ const EnvSchema = z.object({
 
   // Idempotency cache TTL (seconds)
   IDEMPOTENCY_TTL_SECONDS: z.coerce.number().int().min(60).default(86400),
+
+  // Cache TTL (seconds)
+  CACHE_TTL_SECONDS: z.coerce.number().int().min(10).default(90),
 });
 
 export const env = (() => {

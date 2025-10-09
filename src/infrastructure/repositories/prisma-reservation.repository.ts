@@ -22,41 +22,42 @@ export class PrismaReservationRepository implements ReservationRepoPort {
         }
       }
 
-      // Get room to retrieve type information
-      const room = await prismaClient.room.findUnique({
-        where: { id: params.roomId }
-      });
-
-      if (!room) {
-        throw new Error(`Room ${params.roomId} not found`);
-      }
-
-      // Create new reservation
+      // Create new reservation and increment availabilityVersion atomically
       const id = randomUUID();
-      const reservation = await prismaClient.reservation.create({
-        data: {
-          id,
-          roomId: params.roomId,
-          type: room.type, // Get room type from the room
-          checkIn: params.checkIn,
-          checkOut: params.checkOut,
-          guests: params.guests,
-          breakfast: !!params.breakfast,
-          totalCents: params.totalCents,
-          status: 'CONFIRMED',
-          createdAt: new Date(),
-          idempotencyKey: params.idempotencyKey
+      const reservation = await prismaClient.$transaction(async (tx) => {
+        // Get room to retrieve type information
+        const room = await tx.room.findUnique({ where: { id: params.roomId } });
+        if (!room) {
+          throw new Error(`Room ${params.roomId} not found`);
         }
+
+        const created = await tx.reservation.create({
+          data: {
+            id,
+            roomId: params.roomId,
+            type: room.type, // Get room type from the room
+            checkIn: params.checkIn,
+            checkOut: params.checkOut,
+            guests: params.guests,
+            breakfast: !!params.breakfast,
+            totalCents: params.totalCents,
+            status: 'CONFIRMED',
+            createdAt: new Date(),
+            idempotencyKey: params.idempotencyKey
+          }
+        });
+
+        await tx.room.update({
+          where: { id: params.roomId },
+          data: { availabilityVersion: { increment: 1 } }
+        });
+
+        return created;
       });
 
-      // Increment room availability version for cache invalidation
-      await prismaClient.room.update({
-        where: { id: params.roomId },
-        data: { availabilityVersion: { increment: 1 } }
-      });
       PrismaReservationRepository.onAvailabilityInvalidated?.();
 
-      logger.info(`Reservation ${id} created successfully`);
+      logger.info(`Reservation ${reservation.id} created successfully`);
       return this.mapToDTO(reservation);
     } catch (error) {
       logger.error({ error }, `Error creating reservation`);

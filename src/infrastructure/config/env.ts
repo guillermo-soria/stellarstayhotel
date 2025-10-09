@@ -22,6 +22,13 @@ const EnvSchema = z.object({
 
   // Cache TTL (seconds)
   CACHE_TTL_SECONDS: z.coerce.number().int().min(10).default(90),
+
+  // Readiness memory thresholds (MB)
+  READINESS_MEMORY_WARNING_MB: z.coerce.number().int().min(50).default(200),
+  READINESS_MEMORY_CRITICAL_MB: z.coerce.number().int().min(100).default(500),
+}).refine((val) => val.READINESS_MEMORY_CRITICAL_MB > val.READINESS_MEMORY_WARNING_MB, {
+  message: "READINESS_MEMORY_CRITICAL_MB must be greater than READINESS_MEMORY_WARNING_MB",
+  path: ["READINESS_MEMORY_CRITICAL_MB"],
 });
 
 export const env = (() => {

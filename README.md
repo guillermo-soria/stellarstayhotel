@@ -16,7 +16,8 @@ StellarStay Hotels scalable reservation system implementing hexagonal architectu
 - ✅ **Dynamic Pricing Engine** - Weekend uplift, length discounts, breakfast options
 - ✅ **Reliability Patterns** - Retry policies, timeout management, error handling
 - ✅ **Data Consistency** - Shared repository instances prevent double-booking
-- ✅ **Comprehensive Testing** - 132 tests passing (integration + unit)
+- ✅ **Comprehensive Testing** - All unit + integration tests passing
+- ✅ **Caching Layer** - Cache-aside for availability with invalidation on booking
 
 ## Quick Start
 
@@ -35,7 +36,7 @@ npx prisma db seed
 # Start development server
 npm run dev
 
-# Run all tests (132 tests)
+# Run all tests
 npm test
 
 # Run integration tests
@@ -44,6 +45,62 @@ npm run test:integration
 # Access database (optional)
 npx prisma studio
 ```
+
+## Health and Readiness Endpoints
+
+- GET `/health` (liveness)
+  - Purpose: fast liveness signal (<50ms). 
+  - Payload: service status and reliability metrics/circuit breaker states. 
+  - Note: does not include cache diagnostics to keep it lean.
+
+- GET `/ready` (readiness)
+  - Purpose: indicate instance is ready to serve traffic. 
+  - Checks:
+    - Memory usage with two-tier thresholds (configurable via env):
+      - `READINESS_MEMORY_WARNING_MB` (default 200) — warning is non-fatal; readiness remains HTTP 200
+      - `READINESS_MEMORY_CRITICAL_MB` (default 500) — critical is fatal; readiness returns HTTP 503
+      - Note: critical must be greater than warning; validated on startup.
+    - Circuit breakers: if any are OPEN, readiness is degraded (503)
+  - Diagnostics included for observability:
+    - cache.engine (in-memory)
+    - cache.ttlSeconds (from `CACHE_TTL_SECONDS`)
+    - cache.stats (hits, misses, hitRate)
+    - cache.availabilityVersion (global version used for invalidation)
+
+Why treat memory warnings as non-fatal? This prevents transient heap spikes from flipping readiness during normal operation and avoids flakiness in tests where environment memory can vary. Readiness only fails on critical memory pressure or degraded reliability (OPEN circuit breakers), providing stable and actionable signals.
+
+## Caching Strategy
+
+The service implements a cache-aside strategy for the availability query to reduce read load and improve latency under traffic spikes.
+
+- Scope: Only GET /api/rooms/available is cached.
+- Key: Derived from normalized request parameters + a global availability version.
+- Store: In-memory by default, Redis-ready via a CachePort interface.
+- TTL: Configurable via env `CACHE_TTL_SECONDS` (default 90s). Suggested 30–60s in production.
+- Invalidation: Automatic on successful reservation creation. The repository increments the room's `availabilityVersion` and a global in-process version in a single database transaction. Any subsequent availability request computes a new cache key and bypasses stale entries.
+- Metrics: Basic hit/miss counters and availability version are exposed via `/ready` under `checks.cache` (not included in `/health`).
+
+Why global versioning? It is simple and safe for small scale. For finer granularity, see Future Improvements.
+
+### Environment Variables
+
+- `CACHE_TTL_SECONDS` — TTL in seconds for cached availability results. Default 90.
+- `IDEMPOTENCY_TTL_SECONDS` — Controls retention for idempotency keys (future external store).
+- `READINESS_MEMORY_WARNING_MB` — Readiness memory warning threshold in MB (non-fatal). Default 200.
+- `READINESS_MEMORY_CRITICAL_MB` — Readiness memory critical threshold in MB (fatal). Default 500.
+- `REDIS_URL` — Optional, for a future Redis cache adapter.
+
+### Trade-offs
+
+- Global invalidation may evict unrelated availability entries after any booking. With Redis and per-room snapshots, we can limit invalidation scope.
+- Shorter TTL reduces staleness but increases DB load. Start at 30–60s and tune with hitRate metrics.
+
+### Future Improvements
+
+- Granular invalidation: include per-room version snapshots in the key to avoid global busting.
+- Redis adapter: shared cache across instances; expose richer metrics and eviction policies.
+- Per-room getById cache: add a small TTL cache for hot paths validating room/type/capacity.
+- Idempotency + cache: ensure repeated keys return same reservation without bumping version.
 
 ## Database Setup
 

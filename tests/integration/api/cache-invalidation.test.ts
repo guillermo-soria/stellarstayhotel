@@ -34,6 +34,10 @@ describe('Cache invalidation on reservation', () => {
       type: 'junior'
     } as const;
 
+    // Snapshot readiness (to read cache metrics/version)
+    const readyBefore = await request(app).get('/ready').expect(200);
+    const versionBefore: number | undefined = readyBefore.body?.checks?.cache?.availabilityVersion;
+
     // First availability: expect to include room-001 (seeded)
     const first = await request(app)
       .get('/api/rooms/available')
@@ -42,6 +46,7 @@ describe('Cache invalidation on reservation', () => {
 
     const firstItems: Array<{ roomId: string; type: string }> = first.body.items ?? [];
     const hadRoom001 = firstItems.some(i => i.roomId === 'room-001');
+    expect(hadRoom001).toBe(true);
 
     // Create reservation for room-001 overlapping same range
     const reservationData = {
@@ -68,12 +73,13 @@ describe('Cache invalidation on reservation', () => {
     const secondItems: Array<{ roomId: string; type: string }> = second.body.items ?? [];
     const hasRoom001After = secondItems.some(i => i.roomId === 'room-001');
 
-    // If it was present initially, it must be gone after booking
-    if (hadRoom001) {
-      expect(hasRoom001After).toBe(false);
-    } else {
-      // If initial dataset doesn't include it (unexpected), still expect size not to increase
-      expect(secondItems.length).toBeLessThanOrEqual(firstItems.length);
+    expect(hasRoom001After).toBe(false);
+
+    // Version should have increased at least by 1
+    const readyAfter = await request(app).get('/ready').expect(200);
+    const versionAfter: number | undefined = readyAfter.body?.checks?.cache?.availabilityVersion;
+    if (typeof versionBefore === 'number' && typeof versionAfter === 'number') {
+      expect(versionAfter).toBeGreaterThan(versionBefore);
     }
   });
 });

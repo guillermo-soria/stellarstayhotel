@@ -1,4 +1,5 @@
 import { CachePort, CacheMetricsPort } from '../../application/ports/cache.port';
+import { env } from '../config/env';
 
 interface Entry {
   v: unknown;
@@ -39,4 +40,4 @@ export class InMemoryCache implements CachePort {
   stats() { return this.metrics.snapshot(); }
 }
 
-export const globalInMemoryCache = new InMemoryCache(90);
+export const globalInMemoryCache = new InMemoryCache(env.CACHE_TTL_SECONDS);

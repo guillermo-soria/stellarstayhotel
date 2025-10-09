@@ -1,5 +1,6 @@
 // Test setup file for global configurations
 import { logger } from '../src/infrastructure/logger';
+import { PrismaClientSingleton } from '../src/infrastructure/database/prisma-client';
 
 // Silence logger during tests
 logger.level = 'silent';
@@ -16,3 +17,12 @@ global.console = {
   warn: jest.fn(),
   error: jest.fn(),
 };
+
+// Ensure Prisma disconnects after all tests to prevent open handles
+afterAll(async () => {
+  try {
+    await PrismaClientSingleton.disconnect();
+  } catch {
+    // ignore
+  }
+});

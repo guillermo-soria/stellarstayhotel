@@ -177,10 +177,10 @@ describe('Health Controllers', () => {
       );
     });
 
-    it('should return not_ready status with high memory usage', async () => {
-      // Mock memory usage to be high
+    it('should return ready status with high memory usage warning (non-fatal)', async () => {
+      // Mock memory usage to be high but below critical
       (process.memoryUsage as any) = jest.fn().mockReturnValue({
-        heapUsed: 250 * 1024 * 1024, // 250MB (> 200MB threshold)
+        heapUsed: 250 * 1024 * 1024, // 250MB (> 200MB threshold, < critical)
         heapTotal: 300 * 1024 * 1024,
         external: 0,
         arrayBuffers: 0,
@@ -192,10 +192,10 @@ describe('Health Controllers', () => {
         mockResponse as Response
       );
 
-      expect(mockResponse.status).toHaveBeenCalledWith(503);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          status: 'not_ready',
+          status: 'ready',
           timestamp: expect.any(String),
           responseTime: expect.stringMatching(/^\d+ms$/),
           checks: expect.objectContaining({
@@ -252,10 +252,10 @@ describe('Health Controllers', () => {
       });
     });
 
-    it('should handle edge case: exactly at memory threshold', async () => {
-      // Mock memory usage to be exactly at threshold
+    it('should return ready status at memory warning threshold (non-fatal)', async () => {
+      // Mock memory usage to be exactly at warning threshold
       (process.memoryUsage as any) = jest.fn().mockReturnValue({
-        heapUsed: 200 * 1024 * 1024, // Exactly 200MB
+        heapUsed: 200 * 1024 * 1024, // Exactly 200MB -> warning, still ready
         heapTotal: 250 * 1024 * 1024,
         external: 0,
         arrayBuffers: 0,
@@ -267,10 +267,10 @@ describe('Health Controllers', () => {
         mockResponse as Response
       );
 
-      expect(mockResponse.status).toHaveBeenCalledWith(503);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          status: 'not_ready',
+          status: 'ready',
           checks: expect.objectContaining({
             memory: 'warning',
             memoryUsageMB: 200

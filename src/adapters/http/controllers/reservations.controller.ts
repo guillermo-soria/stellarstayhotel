@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { ReservationBody } from "../schemas/reservation.schema";
 
 import { createReservation } from '../../../infrastructure/container';
+import { reliabilityManager } from '../../../infrastructure/reliability/reliability-manager';
 
 // Export for testing
 export { createReservation };

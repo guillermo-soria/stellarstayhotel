@@ -34,8 +34,11 @@ export class GetAvailableRooms {
     includeBreakdown?: boolean;
   }): Promise<AvailableRoomWithPricing[]> {
     // Get available rooms from repository
-    const rooms = await this.rooms.findAvailable({
-      ...params,
+    const roomsResult = await this.rooms.findAvailable({
+      checkIn: new Date(params.dateRange.checkIn),
+      checkOut: new Date(params.dateRange.checkOut),
+      guests: params.guests,
+      type: params.type,
       limit: 20,
       cursor: null,
     });
@@ -43,7 +46,7 @@ export class GetAvailableRooms {
     // Calculate pricing for each room
     const roomsWithPricing: AvailableRoomWithPricing[] = [];
 
-    for (const room of rooms) {
+    for (const room of roomsResult.items) {
       try {
         const quoteInput: QuoteInput = {
           roomType: room.type,
@@ -56,11 +59,14 @@ export class GetAvailableRooms {
         const quote = this.pricingEngine.quote(quoteInput);
         const avgPricePerNight = Math.round(quote.totalCents / quote.nights);
 
+        // Get base rate from pricing engine static property
+        const baseRate = (this.pricingEngine as any).constructor.BASE[room.type];
+
         roomsWithPricing.push({
-          roomId: room.roomId,
+          roomId: room.id,
           type: room.type,
           capacity: room.capacity,
-          baseRate: room.baseRate,
+          baseRate: baseRate,
           priceCentsPerNight: avgPricePerNight,
           totalCents: quote.totalCents,
           nights: quote.nights,
@@ -68,7 +74,7 @@ export class GetAvailableRooms {
         });
       } catch (error) {
         // Skip rooms with pricing errors (e.g., invalid date ranges)
-        console.warn(`Failed to calculate pricing for room ${room.roomId}:`, error);
+        console.warn(`Failed to calculate pricing for room ${room.id}:`, error);
       }
     }
 

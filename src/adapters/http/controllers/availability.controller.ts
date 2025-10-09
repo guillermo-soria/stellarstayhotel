@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import type { AvailabilityQuery } from "../schemas/availability.schema";
 import { GetAvailableRooms } from "../../../application/use-cases/get-available-rooms";
-import { InMemoryRoomRepository } from "../../../infrastructure/repositories/in-memory-room.repository";
+import { NewInMemoryRoomRepository } from "../../../infrastructure/repositories/new-in-memory-room.repository";
 import { PricingEngine } from "../../../domain/services/pricing-engine";
 
 // Initialize dependencies
-const roomRepo = new InMemoryRoomRepository();
+const roomRepo = new NewInMemoryRoomRepository();
 const pricingEngine = new PricingEngine();
 const getAvailableRooms = new GetAvailableRooms(roomRepo, pricingEngine);
 

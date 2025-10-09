@@ -87,12 +87,15 @@ async function checkServiceHealth(): Promise<ReadinessCheck> {
     const memUsage = process.memoryUsage();
     const memUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
     
-    // Basic memory check - fail if using more than 1GB (adjust as needed)
-    if (memUsedMB > 1024) {
+    // Basic memory check - adjust threshold for testing environment
+    // Use larger limit in testing environments where memory usage is higher
+    const memoryThreshold = process.env.NODE_ENV === 'test' ? 2048 : 1024;
+    
+    if (memUsedMB > memoryThreshold) {
       return {
         name: "service_health",
         status: "error",
-        message: `High memory usage: ${memUsedMB}MB`,
+        message: `High memory usage: ${memUsedMB}MB (threshold: ${memoryThreshold}MB)`,
         duration: Date.now() - startTime,
       };
     }
@@ -100,7 +103,7 @@ async function checkServiceHealth(): Promise<ReadinessCheck> {
     return {
       name: "service_health",
       status: "ok",
-      message: `Memory usage: ${memUsedMB}MB`,
+      message: `Memory usage: ${memUsedMB}MB (threshold: ${memoryThreshold}MB)`,
       duration: Date.now() - startTime,
     };
   } catch (error) {

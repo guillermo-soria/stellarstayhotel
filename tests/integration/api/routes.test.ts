@@ -2,6 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import { router } from '../../../src/adapters/http/routes';
 import { errorMiddleware } from '../../../src/infrastructure/errors/error-middleware';
+import { reservationsRepo } from '../../../src/adapters/http/controllers/new-reservations.controller';
 
 describe('API Routes Integration', () => {
   let app: express.Application;
@@ -11,6 +12,11 @@ describe('API Routes Integration', () => {
     app.use(express.json());
     app.use('/', router);
     app.use(errorMiddleware);
+  });
+
+  beforeEach(() => {
+    // Clear repository state between tests
+    reservationsRepo.clearAll();
   });
 
   describe('Health Endpoints', () => {
@@ -46,8 +52,8 @@ describe('API Routes Integration', () => {
         })
         .expect(200);
 
-      expect(response.body).toHaveProperty('rooms');
-      expect(Array.isArray(response.body.rooms)).toBe(true);
+      expect(response.body).toHaveProperty('items');
+      expect(Array.isArray(response.body.items)).toBe(true);
     });
 
     it('should validate required parameters', async () => {
@@ -94,14 +100,14 @@ describe('API Routes Integration', () => {
 
       // First request
       const response1 = await request(app)
-        .post('/api/reservations')
+        .post('/api/v2/reservations')
         .set('Idempotency-Key', 'idempotent-key-456')
         .send(reservationData)
         .expect(201);
 
       // Second request with same key
       const response2 = await request(app)
-        .post('/api/reservations')
+        .post('/api/v2/reservations')
         .set('Idempotency-Key', 'idempotent-key-456')
         .send(reservationData)
         .expect(200); // Should return existing reservation

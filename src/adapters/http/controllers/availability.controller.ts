@@ -1,14 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import type { AvailabilityQuery } from "../schemas/availability.schema";
-import { GetAvailableRooms } from "../../../application/use-cases/get-available-rooms";
-import { PrismaRoomRepository } from "../../../infrastructure/repositories/prisma-room.repository";
-import { PricingEngine } from "../../../domain/services/pricing-engine";
-import { reliabilityManager } from "../../../infrastructure/reliability/reliability-manager";
+import { getAvailableRooms } from '../../../infrastructure/container';
+import { reliabilityManager } from '../../../infrastructure/reliability/reliability-manager';
 
 // Initialize dependencies
-const roomRepo = new PrismaRoomRepository();
-const pricingEngine = new PricingEngine();
-const getAvailableRooms = new GetAvailableRooms(roomRepo, pricingEngine);
 
 export async function getAvailableRoomsController(req: Request, res: Response, next: NextFunction) {
   try {
@@ -25,19 +20,15 @@ export async function getAvailableRoomsController(req: Request, res: Response, n
         guests: query.guests,
         type: query.type,
         breakfast: query.breakfast,
-        includeBreakdown: query.breakdown, // Use validated breakdown instead of raw query
+        includeBreakdown: query.breakdown,
       }),
       'get-available-rooms',
-      {
-        maxRetries: 3,
-        timeoutMs: 5000,
-        useCircuitBreaker: true
-      }
+      { maxRetries: 3, timeoutMs: 5000, useCircuitBreaker: true }
     );
 
     // Transform to API response format
     const response = {
-      items: rooms.map(room => ({
+      items: rooms.map((room) => ({
         roomId: room.roomId,
         type: room.type,
         capacity: room.capacity,

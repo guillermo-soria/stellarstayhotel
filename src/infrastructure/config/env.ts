@@ -26,6 +26,9 @@ const EnvSchema = z.object({
   // Readiness memory thresholds (MB)
   READINESS_MEMORY_WARNING_MB: z.coerce.number().int().min(50).default(200),
   READINESS_MEMORY_CRITICAL_MB: z.coerce.number().int().min(100).default(500),
+
+  // Redis connection string (optional)
+  REDIS_URL: z.string().optional(),
 }).refine((val) => val.READINESS_MEMORY_CRITICAL_MB > val.READINESS_MEMORY_WARNING_MB, {
   message: "READINESS_MEMORY_CRITICAL_MB must be greater than READINESS_MEMORY_WARNING_MB",
   path: ["READINESS_MEMORY_CRITICAL_MB"],

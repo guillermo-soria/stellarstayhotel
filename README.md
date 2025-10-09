@@ -484,6 +484,88 @@ curl -X POST "http://localhost:3000/api/reservations" \
 - `409` - Room already booked for those dates
 - `422` - Invalid date range or business rule violation
 
+### POST /api/ai/query
+
+**Purpose:** AI-powered natural language query processing for hotel search
+
+**Request Body:**
+```json
+{
+  "query": "Find a king room for 2 guests under $200 with breakfast"
+}
+```
+
+**Example Request:**
+```bash
+curl -X POST "http://localhost:3000/api/ai/query" \
+  -H "Content-Type: application/json" \
+  -d '{"query":"Show me luxury suites with breakfast for a week in December"}'
+```
+
+**Success Response (200):**
+```json
+{
+  "natural_language_response": "We found 3 luxury suites with breakfast available for your December stay. Top options include...",
+  "structured_results": [ ... ],
+  "extracted_parameters": {
+    "check_in_date": "2025-12-01",
+    "check_out_date": "2025-12-08",
+    "num_guests": 2,
+    "room_type": "luxury",
+    "breakfast_included": true
+  }
+}
+```
+
+**Error Scenarios:**
+- `400` - Invalid query format
+- `404` - No rooms found matching criteria
+- `500` - AI processing error
+
+---
+
+## AI Query Endpoint (Ollama Integration)
+
+This project supports natural language hotel search using an AI-powered endpoint via Ollama.
+
+### How it works
+- The `/api/ai/query` endpoint accepts a user query (e.g., "Find a king room for 2 guests under $200 with breakfast").
+- The backend uses Ollama (LLM) to extract booking parameters from the query.
+- It finds available rooms matching those parameters.
+- Ollama generates a friendly, natural language response summarizing the results.
+
+### Example Request
+```json
+POST /api/ai/query
+{
+  "query": "Show me luxury suites with breakfast for a week in December"
+}
+```
+
+### Example Response
+```json
+{
+  "natural_language_response": "We found 3 luxury suites with breakfast available for your December stay. Top options include...",
+  "structured_results": [ ... ],
+  "extracted_parameters": {
+    "check_in_date": "2025-12-01",
+    "check_out_date": "2025-12-08",
+    "num_guests": 2,
+    "room_type": "luxury",
+    "breakfast_included": true
+  }
+}
+```
+
+### Setup
+1. Install Ollama (see docs/technology-stack-justification.md)
+2. Pull a recommended model (e.g., `ollama pull llama3.2:3b`)
+3. Start Ollama server (`ollama serve`)
+4. Run the backend and POST to `/api/ai/query`
+
+### Reference
+See `src/domain/services/query-processor.ts` for the main logic.
+
 ---
 
 ## Architecture Summary
@@ -548,3 +630,17 @@ npm run type-check  # TypeScript compilation check
 - [2025-10-09] Health/Readiness endpoint now performs a real DB ping using Prisma ($queryRaw). Response includes `db` status ("healthy" or "unreachable").
 - Prisma client output changed to dist/generated/prisma for compatibility with compiled code.
 - If DB is unreachable, readiness status is "not_ready" and `checks.db` reflects the error.
+
+---
+
+## Reference Architecture RFC
+
+For a detailed explanation of the hexagonal architecture, see [docs/RFC-001-Architecture.md](docs/RFC-001-Architecture.md).
+
+The RFC covers:
+- Motivation and benefits of hexagonal architecture
+- Layer and port definitions (primary/secondary)
+- Example flows and diagrams
+- References to the Mermaid diagram (`hexagonal-architecture.mmd`)
+
+---

@@ -1,0 +1,45 @@
+%% Hexagonal Architecture Diagram for StellarStay Hotels
+%% Save as hexagonal-architecture.mmd and open in Mermaid Editor or compatible tool
+
+flowchart TD
+    subgraph Domain Layer
+        PricingEngine[Pricing Engine]
+        ReservationService[Reservation Service]
+        RoomService[Room Service]
+    end
+    subgraph Application Layer
+        CreateReservationPort[CreateReservationPort]
+        QueryReservationPort[QueryReservationPort]
+        RoomAvailabilityPort[RoomAvailabilityPort]
+        PricingCalculationPort[PricingCalculationPort]
+    end
+    subgraph Infrastructure Layer
+        HTTPReservationAdapter[HTTPReservationAdapter]
+        HTTPRoomAdapter[HTTPRoomAdapter]
+        InMemoryReservationRepository[InMemoryReservationRepository]
+        PrismaReservationRepository[PrismaReservationRepository]
+        InMemoryRoomRepository[InMemoryRoomRepository]
+        PrismaRoomRepository[PrismaRoomRepository]
+        ConfigurationAdapter[ConfigurationAdapter]
+        PaymentAdapter[PaymentAdapter]
+    end
+    CreateReservationPort --> ReservationService
+    QueryReservationPort --> ReservationService
+    RoomAvailabilityPort --> RoomService
+    PricingCalculationPort --> PricingEngine
+    ReservationService --> ReservationRepoPort[ReservationRepoPort]
+    ReservationService --> RoomRepoPort[RoomRepoPort]
+    ReservationService --> PricingEnginePort[PricingEnginePort]
+    ReservationService --> PaymentPort[PaymentPort]
+    RoomService --> RoomRepoPort
+    RoomService --> ReservationRepoPort
+    PricingEngine --> ConfigurationPort[ConfigurationPort]
+    HTTPReservationAdapter --> CreateReservationPort
+    HTTPReservationAdapter --> QueryReservationPort
+    HTTPRoomAdapter --> RoomAvailabilityPort
+    InMemoryReservationRepository --> ReservationRepoPort
+    PrismaReservationRepository --> ReservationRepoPort
+    InMemoryRoomRepository --> RoomRepoPort
+    PrismaRoomRepository --> RoomRepoPort
+    ConfigurationAdapter --> ConfigurationPort
+    PaymentAdapter --> PaymentPort

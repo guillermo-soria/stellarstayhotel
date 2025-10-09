@@ -33,7 +33,7 @@ export class StubbedPaymentAdapter implements PaymentPort {
   }
 
   async validatePaymentMethod(method: PaymentMethod): Promise<boolean> {
-    logger.info('Validating payment method (stubbed)', { type: method.type });
+    logger.info({ type: method.type }, 'Validating payment method (stubbed)');
     
     // Simulate validation delay
     await this.simulateDelay(200);
@@ -43,7 +43,7 @@ export class StubbedPaymentAdapter implements PaymentPort {
   }
 
   async refundPayment(transactionId: string, amount?: number): Promise<PaymentResult> {
-    logger.info('Processing refund (stubbed)', { transactionId, amount });
+    logger.info({ transactionId, amount }, 'Processing refund (stubbed)');
     
     await this.simulateDelay(300);
     

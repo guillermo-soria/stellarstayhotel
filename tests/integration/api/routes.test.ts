@@ -2,7 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import { router } from '../../../src/adapters/http/routes';
 import { errorMiddleware } from '../../../src/infrastructure/errors/error-middleware';
-import { reservationsRepo } from '../../../src/adapters/http/controllers/new-reservations.controller';
+import { reservationsRepo } from '../../../src/adapters/http/controllers/reservations.controller';
 
 describe('API Routes Integration', () => {
   let app: express.Application;
@@ -100,14 +100,14 @@ describe('API Routes Integration', () => {
 
       // First request
       const response1 = await request(app)
-        .post('/api/v2/reservations')
+        .post('/api/reservations')
         .set('Idempotency-Key', 'idempotent-key-456')
         .send(reservationData)
         .expect(201);
 
       // Second request with same key
       const response2 = await request(app)
-        .post('/api/v2/reservations')
+        .post('/api/reservations')
         .set('Idempotency-Key', 'idempotent-key-456')
         .send(reservationData)
         .expect(200); // Should return existing reservation

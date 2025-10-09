@@ -8,6 +8,7 @@ import { logger } from '../logger';
 import { randomUUID } from 'crypto';
 
 export class PrismaReservationRepository implements ReservationRepoPort {
+  static onAvailabilityInvalidated?: () => void;
   async create(params: CreateReservationParams): Promise<ReservationDTO> {
     try {
       // Check for existing reservation with same idempotency key
@@ -47,6 +48,13 @@ export class PrismaReservationRepository implements ReservationRepoPort {
           idempotencyKey: params.idempotencyKey
         }
       });
+
+      // Increment room availability version for cache invalidation
+      await prismaClient.room.update({
+        where: { id: params.roomId },
+        data: { availabilityVersion: { increment: 1 } }
+      });
+      PrismaReservationRepository.onAvailabilityInvalidated?.();
 
       logger.info(`Reservation ${id} created successfully`);
       return this.mapToDTO(reservation);

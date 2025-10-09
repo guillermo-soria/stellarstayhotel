@@ -61,11 +61,13 @@ npx prisma studio
       - `READINESS_MEMORY_CRITICAL_MB` (default 500) — critical is fatal; readiness returns HTTP 503
       - Note: critical must be greater than warning; validated on startup.
     - Circuit breakers: if any are OPEN, readiness is degraded (503)
+    - Database connectivity: real DB ping using Prisma `$queryRaw`
   - Diagnostics included for observability:
     - cache.engine (in-memory)
     - cache.ttlSeconds (from `CACHE_TTL_SECONDS`)
     - cache.stats (hits, misses, hitRate)
     - cache.availabilityVersion (global version used for invalidation)
+    - db (healthy/unreachable status)
 
 Why treat memory warnings as non-fatal? This prevents transient heap spikes from flipping readiness during normal operation and avoids flakiness in tests where environment memory can vary. Readiness only fails on critical memory pressure or degraded reliability (OPEN circuit breakers), providing stable and actionable signals.
 
@@ -542,3 +544,7 @@ npm run type-check  # TypeScript compilation check
 ---
 
 *This implementation successfully validates the RFC design through working code that solves real StellarStay business problems while demonstrating proper hexagonal architecture patterns.*
+
+- [2025-10-09] Health/Readiness endpoint now performs a real DB ping using Prisma ($queryRaw). Response includes `db` status ("healthy" or "unreachable").
+- Prisma client output changed to dist/generated/prisma for compatibility with compiled code.
+- If DB is unreachable, readiness status is "not_ready" and `checks.db` reflects the error.

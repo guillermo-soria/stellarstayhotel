@@ -60,7 +60,7 @@ export class GetAvailableRooms {
         const avgPricePerNight = Math.round(quote.totalCents / quote.nights);
 
         // Get base rate from pricing engine static property
-        const baseRate = (this.pricingEngine as any).constructor.BASE[room.type];
+        const baseRate = this.pricingEngine.getBaseRate(room.type);
 
         roomsWithPricing.push({
           roomId: room.id,

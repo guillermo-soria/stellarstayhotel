@@ -13,20 +13,22 @@ PrismaReservationRepository.onAvailabilityInvalidated = () => { availabilityGlob
 export const availabilityVersionProvider = () => availabilityGlobalVersion;
 
 const baseRoomRepo = new PrismaRoomRepository();
-export const inMemoryCache = globalInMemoryCache; // export to access stats
+export const inMemoryCache = globalInMemoryCache;
 
-// Selección dinámica de backend de caché
 const cacheBackend = env.REDIS_URL
   ? new RedisCache(env.CACHE_TTL_SECONDS, env.REDIS_URL)
   : globalInMemoryCache;
 
-export const cachedRoomRepo = new CachedRoomRepository(baseRoomRepo, cacheBackend, availabilityVersionProvider, env.CACHE_TTL_SECONDS);
+export const cachedRoomRepo = new CachedRoomRepository(
+  baseRoomRepo,
+  cacheBackend,
+  availabilityVersionProvider,
+  env.CACHE_TTL_SECONDS
+);
 
-// Shared instances (singletons for Prisma repositories)
 export const reservationRepo = new PrismaReservationRepository();
-export const roomRepo = cachedRoomRepo; // expose cached implementation
+export const roomRepo = cachedRoomRepo;
 export const pricingEngine = new PricingEngine();
 
-// Use cases with shared dependencies
 export const getAvailableRooms = new GetAvailableRooms(roomRepo, pricingEngine);
 export const createReservation = new CreateReservation(reservationRepo, roomRepo, pricingEngine);

@@ -1,0 +1,253 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "StellarStay Hotels API",
+    "version": "1.0.0",
+    "description": "API documentation for StellarStay Hotels reservation system."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local server"
+    }
+  ],
+  "paths": {
+    "/api/rooms/available": {
+      "get": {
+        "summary": "Get available rooms with dynamic pricing",
+        "parameters": [
+          {
+            "name": "checkIn",
+            "in": "query",
+            "required": true,
+            "description": "Check-in date (YYYY-MM-DD). Example: 2024-12-01",
+            "schema": { "type": "string", "format": "date", "default": "2024-12-01" }
+          },
+          {
+            "name": "checkOut",
+            "in": "query",
+            "required": true,
+            "description": "Check-out date (YYYY-MM-DD). Example: 2024-12-03",
+            "schema": { "type": "string", "format": "date", "default": "2024-12-03" }
+          },
+          {
+            "name": "guests",
+            "in": "query",
+            "required": true,
+            "description": "Number of guests (1-10). Example: 2",
+            "schema": { "type": "integer", "default": 2 }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "description": "Room type (junior, king, presidential)",
+            "schema": { "type": "string", "enum": ["junior", "king", "presidential"], "default": "king" }
+          },
+          {
+            "name": "breakfast",
+            "in": "query",
+            "required": false,
+            "description": "Include breakfast pricing (true/false)",
+            "schema": { "type": "boolean", "default": true }
+          },
+          {
+            "name": "breakdown",
+            "in": "query",
+            "required": false,
+            "description": "Include price breakdown (true/false)",
+            "schema": { "type": "boolean", "default": true }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of available rooms with dynamic pricing",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AvailableRoomsResponse" }
+              }
+            }
+          },
+          "400": { "description": "Invalid request parameters" },
+          "404": { "description": "No rooms found matching criteria" }
+        }
+      }
+    },
+    "/api/rooms/book": {
+      "post": {
+        "summary": "Create a reservation for a room",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "description": "Unique key to prevent duplicate bookings. Example: booking-12345",
+            "schema": { "type": "string", "default": "booking-12345" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateReservationRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reservation created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ReservationResponse" }
+              }
+            }
+          },
+          "400": { "description": "Missing Idempotency-Key header" },
+          "404": { "description": "Room not found or not available" },
+          "409": { "description": "Room already booked for those dates" },
+          "422": { "description": "Invalid date range or business rule violation" }
+        }
+      }
+    },
+    "/api/ai/query": {
+      "post": {
+        "summary": "AI-powered hotel search",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AIQueryRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "AI query response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AIQueryResponse" }
+              }
+            }
+          },
+          "400": { "description": "Invalid query format" },
+          "404": { "description": "No rooms found matching criteria" },
+          "500": { "description": "AI processing error" }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Liveness check",
+        "responses": {
+          "200": { "description": "Service is alive" }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "summary": "Readiness check",
+        "responses": {
+          "200": { "description": "Service is ready" },
+          "503": { "description": "Service is not ready" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AvailableRoomsResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Room" }
+          },
+          "paging": {
+            "type": "object",
+            "properties": {
+              "limit": { "type": "integer" },
+              "nextCursor": { "type": ["string", "null"] }
+            }
+          }
+        }
+      },
+      "Room": {
+        "type": "object",
+        "properties": {
+          "roomId": { "type": "string" },
+          "type": { "type": "string" },
+          "capacity": { "type": "integer" },
+          "baseRateCents": { "type": "integer" },
+          "pricing": { "$ref": "#/components/schemas/Pricing" }
+        }
+      },
+      "Pricing": {
+        "type": "object",
+        "properties": {
+          "totalCents": { "type": "integer" },
+          "pricePerNightCents": { "type": "integer" },
+          "nights": { "type": "integer" },
+          "currency": { "type": "string" },
+          "breakdown": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PricingBreakdown" }
+          }
+        }
+      },
+      "PricingBreakdown": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string", "format": "date" },
+          "baseCents": { "type": "integer" },
+          "weekendUpliftCents": { "type": "integer" },
+          "lengthDiscountCents": { "type": "integer" },
+          "breakfastCents": { "type": "integer" },
+          "subtotalCents": { "type": "integer" }
+        }
+      },
+      "CreateReservationRequest": {
+        "type": "object",
+        "properties": {
+          "roomId": { "type": "string" },
+          "type": { "type": "string" },
+          "checkIn": { "type": "string", "format": "date" },
+          "checkOut": { "type": "string", "format": "date" },
+          "guests": { "type": "integer" },
+          "breakfast": { "type": "boolean" }
+        },
+        "required": ["roomId", "type", "checkIn", "checkOut", "guests"]
+      },
+      "ReservationResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "roomId": { "type": "string" },
+          "type": { "type": "string" },
+          "guests": { "type": "integer" },
+          "breakfast": { "type": "boolean" },
+          "checkIn": { "type": "string", "format": "date" },
+          "checkOut": { "type": "string", "format": "date" },
+          "status": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "pricing": { "$ref": "#/components/schemas/Pricing" },
+          "requestIdempotencyKey": { "type": "string" }
+        }
+      },
+      "AIQueryRequest": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" }
+        },
+        "required": ["query"]
+      },
+      "AIQueryResponse": {
+        "type": "object",
+        "properties": {
+          "natural_language_response": { "type": "string" },
+          "structured_results": { "type": "array", "items": { "type": "object" } },
+          "extracted_parameters": { "type": "object" }
+        }
+      }
+    }
+  }
+}

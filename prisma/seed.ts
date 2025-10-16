@@ -1,15 +1,21 @@
+import path from 'path';
+import dotenv from 'dotenv';
 import { PrismaClient } from '../src/generated/prisma';
 import { logger } from '../src/infrastructure/logger';
 
+// Ensure we load the root .env even when running from the prisma/ folder
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 const prisma = new PrismaClient();
 
-const SEED_ROOMS = [
-  { id: "room-001", type: "junior", capacity: 2, baseRate: 6000 },
-  { id: "room-002", type: "junior", capacity: 2, baseRate: 6000 },
-  { id: "room-003", type: "king", capacity: 3, baseRate: 9000 },
-  { id: "room-004", type: "king", capacity: 3, baseRate: 9000 },
-  { id: "room-005", type: "king", capacity: 4, baseRate: 9000 },
-  { id: "room-006", type: "presidential", capacity: 6, baseRate: 15000 },
+type RoomTypeLiteral = 'junior' | 'king' | 'presidential';
+const SEED_ROOMS: { id: string; type: RoomTypeLiteral; capacity: number; baseRate: number }[] = [
+  { id: 'room-001', type: 'junior', capacity: 2, baseRate: 6000 },
+  { id: 'room-002', type: 'junior', capacity: 2, baseRate: 6000 },
+  { id: 'room-003', type: 'king', capacity: 3, baseRate: 9000 },
+  { id: 'room-004', type: 'king', capacity: 3, baseRate: 9000 },
+  { id: 'room-005', type: 'king', capacity: 4, baseRate: 9000 },
+  { id: 'room-006', type: 'presidential', capacity: 6, baseRate: 15000 },
 ];
 
 async function main() {

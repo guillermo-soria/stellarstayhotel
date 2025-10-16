@@ -110,11 +110,26 @@ The project uses **SQLite** for development and **Prisma** as the ORM.
 
 ### First-time setup:
 ```bash
-# Generate Prisma client and run migrations
+# Install runtime/dev helpers (Prisma seed uses ts-node)
+npm install
+npm install -D ts-node
+
+# Generate Prisma client (required after changes to schema)
+npx prisma generate
+
+# Apply migrations (development)
 npx prisma migrate dev
 
-# Seed the database with initial room data
+# Seed the database
 npx prisma db seed
+# Note: this project configures the Prisma seed command via a "prisma" block in package.json
+# which runs: "ts-node prisma/seed.ts". Prisma prints a deprecation warning for the
+# package.json-based config in Prisma v6 and recommends migrating to a dedicated
+# Prisma config file (e.g., `prisma.config.ts`). See: https://pris.ly/prisma-config
+
+# Fallback (if `npx prisma db seed` fails):
+# Run the TypeScript seed script directly with ts-node
+npx ts-node prisma/seed.ts
 ```
 
 ### Database location:

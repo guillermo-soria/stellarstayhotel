@@ -67,11 +67,29 @@ export async function createReservationController(req: Request, res: Response, n
     }
   } catch (err: unknown) {
     const code = extractErrorCode(err) ?? (err instanceof Error ? err.message : 'UNKNOWN_ERROR');
-    if (code === 'ROOM_NOT_FOUND')    return res.status(404).json({ error: { code, message: 'Room no encontrada' }});
-    if (code === 'ROOM_TYPE_MISMATCH')return res.status(400).json({ error: { code, message: 'Tipo de room no coincide' }});
-    if (code === 'OVER_CAPACITY')     return res.status(400).json({ error: { code, message: 'Guests exceden capacidad' }});
-    if (code === 'INVALID_RANGE')     return res.status(400).json({ error: { code, message: 'Rango de fechas inválido' }});
-    if (code === 'DATE_OVERLAP')      return res.status(409).json({ error: { code, message: 'Fechas solapadas con otra reserva' }});
+    const vb = (req as Request & { validatedBody?: ReservationBody }).validatedBody;
+
+    if (code === 'ROOM_NOT_FOUND') {
+      return res.status(404).json({
+        error: {
+          code,
+          message: 'Room no encontrada o inactiva',
+          details: vb ? { roomId: vb.roomId } : undefined
+        }
+      });
+    }
+    if (code === 'ROOM_TYPE_MISMATCH') {
+      return res.status(400).json({ error: { code, message: 'Tipo de room no coincide con el roomId proporcionado' } });
+    }
+    if (code === 'OVER_CAPACITY') {
+      return res.status(400).json({ error: { code, message: 'Guests exceden la capacidad de la room' } });
+    }
+    if (code === 'INVALID_RANGE') {
+      return res.status(400).json({ error: { code, message: 'Rango de fechas inválido (checkIn < checkOut)', details: vb ? { checkIn: vb.checkIn, checkOut: vb.checkOut } : undefined } });
+    }
+    if (code === 'DATE_OVERLAP') {
+      return res.status(409).json({ error: { code, message: 'Room no disponible para las fechas seleccionadas', details: vb ? { roomId: vb.roomId, checkIn: vb.checkIn, checkOut: vb.checkOut } : undefined } });
+    }
     return next(err);
   }
 }

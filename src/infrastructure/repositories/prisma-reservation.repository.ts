@@ -56,6 +56,16 @@ export class PrismaReservationRepository implements ReservationRepoPort {
       });
 
       PrismaReservationRepository.onAvailabilityInvalidated?.();
+      // Also clear in-memory cache when running tests or when using in-memory cache implementation
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { globalInMemoryCache } = require('../cache/in-memory.cache');
+        if (globalInMemoryCache && typeof globalInMemoryCache.clearAll === 'function') {
+          await globalInMemoryCache.clearAll();
+        }
+      } catch (_e) {
+        // ignore - cache backend might be redis or not expose clearAll
+      }
 
       logger.info(`Reservation ${reservation.id} created successfully`);
       return this.mapToDTO(reservation);

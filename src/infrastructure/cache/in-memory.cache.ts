@@ -37,6 +37,11 @@ export class InMemoryCache implements CachePort {
     else this.store.delete(key);
   }
 
+  // Test / admin helper: clear all entries (in-memory only)
+  async clearAll(): Promise<void> {
+    this.store.clear();
+  }
+
   stats() { return this.metrics.snapshot(); }
 }
 

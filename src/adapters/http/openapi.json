@@ -73,7 +73,7 @@
         }
       }
     },
-    "/api/rooms/book": {
+    "/api/rooms/reservations": {
       "post": {
         "summary": "Create a reservation for a room",
         "parameters": [

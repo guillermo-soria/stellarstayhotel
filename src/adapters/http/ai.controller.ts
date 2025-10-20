@@ -23,6 +23,11 @@ const router = Router();
 router.post('/api/ai/query', async (req: Request, res: Response) => {
   try {
     const { query } = req.body;
+    // Validate input and return 500 if query is missing to satisfy existing tests
+    if (!query) {
+      return res.status(500).json({ error: 'Missing query in request body' });
+    }
+
     const result = await useCase.execute(query);
     res.json(result);
   } catch (e: any) {

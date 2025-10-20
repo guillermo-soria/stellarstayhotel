@@ -109,15 +109,23 @@ export class ReliabilityPatterns {
   ): Promise<T> {
     const defaultMessage = `${operationName} timed out after ${timeoutMs}ms`;
     
-    return Promise.race([
-      operation(),
-      new Promise<T>((_, reject) => {
-        setTimeout(() => {
-          logger.warn(`Timeout: ${defaultMessage}`);
-          reject(new Error(timeoutMessage ?? defaultMessage));
-        }, timeoutMs);
-      })
-    ]);
+    // Ensure the timeout timer is cleared when the operation settles.
+    return new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        logger.warn(`Timeout: ${defaultMessage}`);
+        reject(new Error(timeoutMessage ?? defaultMessage));
+      }, timeoutMs);
+
+      operation()
+        .then((result) => {
+          clearTimeout(timer);
+          resolve(result);
+        })
+        .catch((err) => {
+          clearTimeout(timer);
+          reject(err);
+        });
+    });
   }
 
   private isClientError(e: unknown): e is { status: number } {
